@@ -1,5 +1,5 @@
 # Multi-stage build for Microservice 1
-FROM maven:3.9.5-openjdk-17-slim AS build
+FROM maven:3.9.5-eclipse-temurin-17 AS build
 
 WORKDIR /app
 
