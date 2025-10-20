@@ -157,7 +157,26 @@ aws iam create-role --role-name GitHubActionsRole --assume-role-policy-document 
 # Create appropriate policies for your role
 ```
 
-### 3. Local Development
+### 3. Running Tests
+
+Both microservices include comprehensive unit tests (39+ tests total).
+
+```bash
+# Run tests for Microservice 1
+cd microservice-1
+mvn test
+
+# Run tests for Microservice 2
+cd microservice-2
+mvn test
+
+# Run all tests from root
+mvn test -f microservice-1/pom.xml && mvn test -f microservice-2/pom.xml
+```
+
+See [TESTING.md](TESTING.md) for detailed test documentation.
+
+### 4. Local Development
 
 #### Microservice 1 (REST API)
 ```bash
@@ -171,7 +190,7 @@ cd microservice-2
 mvn spring-boot:run
 ```
 
-### 4. Testing the API
+### 5. Testing the API
 
 ```bash
 # Test the health endpoint

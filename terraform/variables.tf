@@ -17,9 +17,8 @@ variable "project_name" {
 }
 
 variable "api_token" {
-  description = "API token for authentication"
+  description = "API token for authentication (must be provided in terraform.tfvars or as TF_VAR_api_token)"
   type        = string
-  default     = "$DJISA<$#45ex3RtYr"
   sensitive   = true
 }
 
