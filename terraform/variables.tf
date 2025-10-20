@@ -1,0 +1,72 @@
+variable "aws_region" {
+  description = "AWS region"
+  type        = string
+  default     = "eu-west-1"
+}
+
+variable "availability_zones" {
+  description = "Availability zones to use"
+  type        = list(string)
+  default     = ["eu-west-1a", "eu-west-1b"]
+}
+
+variable "project_name" {
+  description = "Name of the project"
+  type        = string
+  default     = "email-processor"
+}
+
+variable "api_token" {
+  description = "API token for authentication"
+  type        = string
+  default     = "$DJISA<$#45ex3RtYr"
+  sensitive   = true
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "dev"
+}
+
+variable "microservice_1_cpu" {
+  description = "CPU units for microservice 1 (256, 512, 1024, 2048, 4096)"
+  type        = number
+  default     = 512
+}
+
+variable "microservice_1_memory" {
+  description = "Memory for microservice 1 in MB"
+  type        = number
+  default     = 1024
+}
+
+variable "microservice_2_cpu" {
+  description = "CPU units for microservice 2 (256, 512, 1024, 2048, 4096)"
+  type        = number
+  default     = 256
+}
+
+variable "microservice_2_memory" {
+  description = "Memory for microservice 2 in MB"
+  type        = number
+  default     = 512
+}
+
+variable "desired_count" {
+  description = "Desired number of tasks"
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Maximum number of tasks for auto scaling"
+  type        = number
+  default     = 10
+}
+
+variable "min_capacity" {
+  description = "Minimum number of tasks for auto scaling"
+  type        = number
+  default     = 1
+}

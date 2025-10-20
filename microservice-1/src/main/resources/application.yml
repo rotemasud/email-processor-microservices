@@ -1,0 +1,31 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: email-processor-api
+
+aws:
+  region: ${AWS_DEFAULT_REGION:eu-west-1}
+
+sqs:
+  queue-url: ${SQS_QUEUE_URL:}
+
+ssm:
+  parameter-name: ${SSM_PARAMETER_NAME:/email-processor/api-token}
+
+logging:
+  level:
+    com.emailprocessor: DEBUG
+    software.amazon.awssdk: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
