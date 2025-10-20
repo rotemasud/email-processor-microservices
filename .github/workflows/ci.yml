@@ -1,5 +1,11 @@
 name: CI - Build and Test
 
+# NOTE: This workflow requires AWS credentials to be configured as GitHub Secrets:
+#   - AWS_ACCESS_KEY_ID
+#   - AWS_SECRET_ACCESS_KEY
+#   - AWS_ACCOUNT_ID
+# If you fork this repo, you'll need to set up your own AWS credentials and ECR repositories.
+
 on:
   push:
     branches: [ main, develop ]
@@ -7,8 +13,8 @@ on:
     branches: [ main ]
 
 env:
-  AWS_REGION: eu-west-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+  AWS_REGION: us-west-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com
 
 jobs:
   build-and-test:
@@ -46,6 +52,8 @@ jobs:
         docker tag ${{ matrix.service }}:${{ github.sha }} ${{ matrix.service }}:latest
 
     - name: Configure AWS credentials
+      # Only run AWS deployment on the original repository, not on forks
+      if: github.repository_owner == 'rotemm' && github.event_name == 'push'
       uses: aws-actions/configure-aws-credentials@v4
       with:
         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -53,10 +61,12 @@ jobs:
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
+      if: github.repository_owner == 'rotemm' && github.event_name == 'push'
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build, tag, and push image to Amazon ECR
+      if: github.repository_owner == 'rotemm' && github.event_name == 'push'
       env:
         ECR_REPOSITORY: email-processor-${{ matrix.service }}
         IMAGE_TAG: ${{ github.sha }}
@@ -72,5 +82,6 @@ jobs:
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Output image URI
+      if: github.repository_owner == 'rotemm' && github.event_name == 'push'
       run: |
         echo "Image URI: ${{ steps.build-and-push.outputs.image }}"

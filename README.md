@@ -62,6 +62,21 @@ A cloud-native microservices architecture for processing email data using AWS se
 - Maven 3.9+
 - GitHub repository with Actions enabled
 
+## 🔒 Security Notice for Forkers
+
+**If you're forking this repository:**
+- ✅ **Your AWS credentials are safe** - This repo does NOT contain any AWS credentials
+- ⚠️ **You MUST set up your own AWS account and credentials** to use this project
+- 🔐 GitHub Actions uses encrypted secrets that are NOT accessible to forks
+- 💰 **Running this infrastructure will incur AWS charges** (~$80-100/month if running 24/7)
+- 📝 The workflow is configured to only deploy from the original repository owner's account
+
+**To use this in your own AWS account:**
+1. Create your own AWS account and IAM user with appropriate permissions
+2. Update `github.repository_owner` in `.github/workflows/ci.yml` to your GitHub username
+3. Configure GitHub Secrets (see below)
+4. Update `terraform/terraform.tfvars` with your desired configuration
+
 ## Setup Instructions
 
 ### 1. Infrastructure Deployment
@@ -82,11 +97,31 @@ terraform apply
 
 ### 2. GitHub Secrets Configuration
 
-Configure the following secrets in your GitHub repository:
+**⚠️ IMPORTANT**: These secrets are stored securely in GitHub and are NOT committed to the repository.
 
-- `AWS_ACCESS_KEY_ID`: Your AWS access key
-- `AWS_SECRET_ACCESS_KEY`: Your AWS secret key
-- `AWS_ACCOUNT_ID`: Your AWS account ID
+Configure the following secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+
+- `AWS_ACCESS_KEY_ID`: Your AWS access key (from IAM user)
+- `AWS_SECRET_ACCESS_KEY`: Your AWS secret key (from IAM user)
+- `AWS_ACCOUNT_ID`: Your 12-digit AWS account ID
+
+**How to get these values:**
+```bash
+# Get your AWS Account ID
+aws sts get-caller-identity --query Account --output text
+
+# Your access keys should come from an IAM user with appropriate permissions:
+# - AdministratorAccess (for full deployment), OR
+# - Custom policy with ECS, ECR, VPC, IAM, S3, SQS, SSM permissions
+```
+
+**Security Best Practices:**
+- ✅ Use an IAM user specifically for GitHub Actions (not your root account)
+- ✅ Enable MFA on the IAM user
+- ✅ Rotate credentials regularly
+- ✅ Use minimum required permissions (principle of least privilege)
+- ❌ Never commit credentials to the repository
+- ❌ Never share your secrets publicly
 
 ### 3. Local Development
 

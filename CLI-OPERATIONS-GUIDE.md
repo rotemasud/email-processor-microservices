@@ -42,7 +42,7 @@ aws sts get-caller-identity
 
 # Export your account ID as a variable for later use
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
-export AWS_REGION=eu-west-1  # Or your preferred region
+export AWS_REGION=us-west-1  # Or your preferred region
 echo "Account ID: $AWS_ACCOUNT_ID"
 echo "Region: $AWS_REGION"
 ```
@@ -1200,7 +1200,7 @@ chmod +x health-check.sh monitor-logs.sh
 ### Quick Reference Commands
 ```bash
 # Export all important variables for your session
-export AWS_REGION=eu-west-1
+export AWS_REGION=us-west-1
 export AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
 export CLUSTER_NAME="email-processor-cluster"
 export SERVICE_1="email-processor-microservice-1"

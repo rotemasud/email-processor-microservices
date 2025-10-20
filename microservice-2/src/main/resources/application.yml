@@ -6,7 +6,7 @@ spring:
     name: email-processor-consumer
 
 aws:
-  region: ${AWS_DEFAULT_REGION:eu-west-1}
+  region: ${AWS_DEFAULT_REGION:us-west-1}
 
 sqs:
   queue-url: ${SQS_QUEUE_URL:}
