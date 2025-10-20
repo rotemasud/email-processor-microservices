@@ -29,9 +29,9 @@ A cloud-native microservices architecture for processing email data using AWS se
 │ Private Subnet  │    └─────────────────┘    │ Private Subnet  │
 └─────────────────┘                            └────────┬────────┘
          │                                              │
-         │ Validate Token                              │
+         │ Validate Token                               │
          ▼                                              │ Store Email
-┌─────────────────┐                            ┌───────▼─────────┐
+┌─────────────────┐                            ┌───────-▼────────┐
 │  SSM Parameter  │                            │   S3 Bucket     │
 │  Store (Token)  │                            │ (Email Storage) │
 └─────────────────┘                            └─────────────────┘
