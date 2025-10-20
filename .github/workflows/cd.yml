@@ -1,14 +1,17 @@
 name: CD - Deploy to ECS
 
 # NOTE: This workflow uses OIDC to authenticate with AWS (no long-lived credentials needed)
-# Required GitHub Secrets:
-#   - AWS_ACCOUNT_ID (for ECR registry URL)
 # The workflow assumes the IAM role: arn:aws:iam::256344107989:role/GitHubActionsRole
 
 # This workflow runs ONLY on manual trigger to give you full control over deployments
 on:
   workflow_dispatch:
     inputs:
+      aws_account_id:
+        description: 'AWS Account ID (12-digit number for ECR registry)'
+        required: true
+        default: '256344107989'
+        type: string
       service:
         description: 'Service to deploy (microservice-1, microservice-2, or both)'
         required: true
@@ -26,7 +29,7 @@ on:
 
 env:
   AWS_REGION: us-west-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com
+  ECR_REGISTRY: ${{ github.event.inputs.aws_account_id }}.dkr.ecr.us-west-1.amazonaws.com
   ECS_CLUSTER: email-processor-cluster
 
 jobs:

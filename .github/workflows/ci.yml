@@ -1,8 +1,6 @@
 name: CI - Build and Test
 
 # NOTE: This workflow uses OIDC to authenticate with AWS (no long-lived credentials needed)
-# Required GitHub Secrets:
-#   - AWS_ACCOUNT_ID (for ECR registry URL)
 # The workflow assumes the IAM role: arn:aws:iam::256344107989:role/GitHubActionsRole
 # If you fork this repo, you'll need to set up your own IAM role and ECR repositories.
 
@@ -10,6 +8,11 @@ name: CI - Build and Test
 on:
   workflow_dispatch:
     inputs:
+      aws_account_id:
+        description: 'AWS Account ID (12-digit number for ECR registry)'
+        required: true
+        default: '256344107989'
+        type: string
       skip_ecr_push:
         description: 'Skip pushing to ECR (just build and test locally)'
         required: false
@@ -18,7 +21,7 @@ on:
 
 env:
   AWS_REGION: us-west-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com
+  ECR_REGISTRY: ${{ github.event.inputs.aws_account_id }}.dkr.ecr.us-west-1.amazonaws.com
 
 jobs:
   build-and-test:
