@@ -6,7 +6,6 @@ If you forked this repository and want to run it on your own AWS account, follow
 
 - **Cost Warning**: Running this infrastructure will cost approximately $80-100/month if running 24/7
 - **Your Responsibility**: You're responsible for all AWS charges incurred
-- **No Access to Original Secrets**: GitHub Secrets from the original repo are NOT transferred to forks
 - **Manual Setup Required**: You need to configure your own AWS account and update several files
 
 ---
@@ -167,19 +166,7 @@ role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/GitHubActionsRole
 
 **2 places to update** in `cd.yml` (lines 46, 103)
 
-### Step 5: Configure GitHub Secrets
-
-In your forked repository on GitHub:
-
-1. Go to **Settings** → **Secrets and variables** → **Actions**
-2. Click **New repository secret**
-3. Add this secret:
-   - **Name**: `AWS_ACCOUNT_ID`
-   - **Value**: Your 12-digit AWS account ID
-
-That's it! No access keys needed (OIDC provides temporary credentials automatically).
-
-### Step 6: Deploy Infrastructure with Terraform
+### Step 5: Deploy Infrastructure with Terraform
 
 ```bash
 # Clone your forked repository
@@ -204,7 +191,7 @@ This will create:
 - SSM parameter for API token
 - All necessary IAM roles and security groups
 
-### Step 7: Test Your Setup
+### Step 6: Test Your Setup
 
 #### Option 1: Via GitHub Actions UI
 
@@ -334,70 +321,4 @@ curl -X POST http://$ALB_URL/api/email \
    ```
 
 ---
-
-## 🔄 Keeping Your Fork Updated
-
-To sync your fork with the original repository:
-
-```bash
-# Add the original repo as upstream
-git remote add upstream https://github.com/rotemasud/email-processor-microservices.git
-
-# Fetch changes
-git fetch upstream
-
-# Merge changes
-git checkout main
-git merge upstream/main
-
-# Push to your fork
-git push origin main
-```
-
-**⚠️ Important**: After syncing, re-apply your changes:
-- IAM role ARN in workflows
-- Repository owner in `ci.yml`
-- Any other customizations
-
----
-
-## 🎓 Learning Resources
-
-- [AWS ECS Documentation](https://docs.aws.amazon.com/ecs/)
-- [GitHub Actions OIDC with AWS](https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/configuring-openid-connect-in-amazon-web-services)
-- [Terraform AWS Provider](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-
----
-
-## 🆘 Getting Help
-
-If you run into issues:
-
-1. Check the [main README](README.md) for general documentation
-2. Review [WORKFLOW-GUIDE.md](WORKFLOW-GUIDE.md) for CI/CD details
-3. Check GitHub Actions logs for error messages
-4. Review CloudWatch logs in AWS Console
-
----
-
-## 📝 Summary Checklist
-
-- [ ] AWS account created
-- [ ] AWS CLI configured
-- [ ] OIDC provider created in AWS
-- [ ] IAM role created with trust policy
-- [ ] Permissions attached to IAM role
-- [ ] Updated `ci.yml` (4 places)
-- [ ] Updated `cd.yml` (2 places)
-- [ ] Added `AWS_ACCOUNT_ID` secret to GitHub
-- [ ] Ran `terraform apply`
-- [ ] Tested CI workflow
-- [ ] Tested CD workflow
-- [ ] Tested API endpoints
-
-**Once all boxes are checked, you're ready to go!** 🎉
-
----
-
-Good luck with your deployment! If you make improvements or find issues, consider contributing back to the original repository with a pull request.
 
