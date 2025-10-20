@@ -86,10 +86,19 @@ A cloud-native microservices architecture for processing email data using AWS se
 - 📝 The workflow is configured to only deploy from the original repository owner's account
 
 **To use this in your own AWS account:**
-1. Create your own AWS account and IAM user with appropriate permissions
-2. Update `github.repository_owner` in `.github/workflows/ci.yml` to your GitHub username
-3. Configure GitHub Secrets (see below)
-4. Update `terraform/terraform.tfvars` with your desired configuration
+1. **Set up AWS OIDC and IAM:**
+   - Create OIDC provider for GitHub Actions in your AWS account
+   - Create an IAM role with permissions for ECR, ECS, and IAM PassRole
+   - Configure the role's trust policy to allow your forked repository
+2. **Update the workflows:**
+   - Edit both `.github/workflows/ci.yml` and `.github/workflows/cd.yml`
+   - Change `role-to-assume` ARN to your IAM role ARN
+   - Update `github.repository_owner` in `ci.yml` to your GitHub username
+3. **Configure GitHub Secrets:**
+   - Add `AWS_ACCOUNT_ID` secret (just your account ID, no access keys needed!)
+4. **Deploy infrastructure:**
+   - Update `terraform/terraform.tfvars` with your desired configuration
+   - Run `terraform apply`
 
 ## Setup Instructions
 
@@ -111,28 +120,57 @@ terraform apply
 
 ### 2. GitHub Secrets Configuration
 
-**⚠️ IMPORTANT**: These secrets are stored securely in GitHub and are NOT committed to the repository.
+**⚠️ IMPORTANT**: This project uses OIDC (OpenID Connect) for secure authentication with AWS.
 
-Configure the following secrets in your GitHub repository (Settings → Secrets and variables → Actions):
+Configure the following secret in your GitHub repository (Settings → Secrets and variables → Actions):
 
-- `AWS_ACCESS_KEY_ID`: Your AWS access key (from IAM user)
-- `AWS_SECRET_ACCESS_KEY`: Your AWS secret key (from IAM user)
-- `AWS_ACCOUNT_ID`: Your 12-digit AWS account ID
+- `AWS_ACCOUNT_ID`: Your 12-digit AWS account ID (no access keys needed!)
 
-**How to get these values:**
+**How to get your AWS Account ID:**
 ```bash
-# Get your AWS Account ID
 aws sts get-caller-identity --query Account --output text
+```
 
-# Your access keys should come from an IAM user with appropriate permissions:
-# - AdministratorAccess (for full deployment), OR
-# - Custom policy with ECS, ECR, VPC, IAM, S3, SQS, SSM permissions
+**Setting up OIDC in AWS (Required for Forkers):**
+
+If you forked this repo, you need to set up OIDC in your AWS account:
+
+```bash
+# 1. Create OIDC Provider
+aws iam create-open-id-connect-provider \
+  --url https://token.actions.githubusercontent.com \
+  --client-id-list sts.amazonaws.com \
+  --thumbprint-list 6938fd4d98bab03faadb97b34396831e3780aea1
+
+# 2. Create IAM Role (save as trust-policy.json first)
+# Replace YOUR_ACCOUNT_ID and YOUR_USERNAME
+{
+  "Version": "2012-10-17",
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": {
+      "Federated": "arn:aws:iam::YOUR_ACCOUNT_ID:oidc-provider/token.actions.githubusercontent.com"
+    },
+    "Action": "sts:AssumeRoleWithWebIdentity",
+    "Condition": {
+      "StringEquals": {"token.actions.githubusercontent.com:aud": "sts.amazonaws.com"},
+      "StringLike": {"token.actions.githubusercontent.com:sub": "repo:YOUR_USERNAME/email-processor-microservices:*"}
+    }
+  }]
+}
+
+# Create the role
+aws iam create-role --role-name GitHubActionsRole --assume-role-policy-document file://trust-policy.json
+
+# 3. Attach permissions (ECR, ECS, IAM PassRole)
+# Create appropriate policies for your role
 ```
 
 **Security Best Practices:**
-- ✅ Use an IAM user specifically for GitHub Actions (not your root account)
-- ✅ Enable MFA on the IAM user
-- ✅ Rotate credentials regularly
+- ✅ OIDC provides temporary credentials (much more secure than access keys)
+- ✅ Credentials automatically rotate for each workflow run
+- ✅ No long-lived credentials stored in GitHub
+- ✅ Trust policy restricts which repository can access your AWS account
 - ✅ Use minimum required permissions (principle of least privilege)
 - ❌ Never commit credentials to the repository
 - ❌ Never share your secrets publicly

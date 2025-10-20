@@ -1,10 +1,10 @@
 name: CI - Build and Test
 
-# NOTE: This workflow requires AWS credentials to be configured as GitHub Secrets:
-#   - AWS_ACCESS_KEY_ID
-#   - AWS_SECRET_ACCESS_KEY
-#   - AWS_ACCOUNT_ID
-# If you fork this repo, you'll need to set up your own AWS credentials and ECR repositories.
+# NOTE: This workflow uses OIDC to authenticate with AWS (no long-lived credentials needed)
+# Required GitHub Secrets:
+#   - AWS_ACCOUNT_ID (for ECR registry URL)
+# The workflow assumes the IAM role: arn:aws:iam::256344107989:role/GitHubActionsRole
+# If you fork this repo, you'll need to set up your own IAM role and ECR repositories.
 
 # This workflow runs ONLY on manual trigger to save costs and give you control
 on:
@@ -23,6 +23,10 @@ env:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    # Required for OIDC authentication
+    permissions:
+      id-token: write   # Required to request JWT for OIDC
+      contents: read    # Required to checkout code
     strategy:
       matrix:
         service: [microservice-1, microservice-2]
@@ -57,20 +61,19 @@ jobs:
 
     - name: Configure AWS credentials
       # Only run AWS steps if not skipping ECR push and on original repository
-      if: github.repository_owner == 'rotemm' && github.event.inputs.skip_ecr_push != 'true'
-      uses: aws-actions/configure-aws-credentials@v4
+      if: github.repository_owner == 'rotemasud' && github.event.inputs.skip_ecr_push != 'true'
+      uses: aws-actions/configure-aws-credentials@v2
       with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        role-to-assume: arn:aws:iam::256344107989:role/GitHubActionsRole
         aws-region: ${{ env.AWS_REGION }}
 
     - name: Login to Amazon ECR
-      if: github.repository_owner == 'rotemm' && github.event.inputs.skip_ecr_push != 'true'
+      if: github.repository_owner == 'rotemasud' && github.event.inputs.skip_ecr_push != 'true'
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v2
 
     - name: Build, tag, and push image to Amazon ECR
-      if: github.repository_owner == 'rotemm' && github.event.inputs.skip_ecr_push != 'true'
+      if: github.repository_owner == 'rotemasud' && github.event.inputs.skip_ecr_push != 'true'
       env:
         ECR_REPOSITORY: email-processor-${{ matrix.service }}
         IMAGE_TAG: ${{ github.sha }}
@@ -86,7 +89,7 @@ jobs:
         echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
     - name: Output image URI
-      if: github.repository_owner == 'rotemm' && github.event.inputs.skip_ecr_push != 'true'
+      if: github.repository_owner == 'rotemasud' && github.event.inputs.skip_ecr_push != 'true'
       run: |
         echo "Image URI: ${{ steps.build-and-push.outputs.image }}"
     
