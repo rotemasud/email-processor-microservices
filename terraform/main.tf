@@ -5,6 +5,10 @@ terraform {
       source  = "hashicorp/aws"
       version = "~> 5.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -15,197 +19,42 @@ provider "aws" {
 # Data sources
 data "aws_caller_identity" "current" {}
 
-# VPC
-resource "aws_vpc" "main" {
-  cidr_block           = "10.0.0.0/16"
-  enable_dns_hostnames = true
-  enable_dns_support   = true
+# Networking Module
+module "networking" {
+  source = "./modules/networking"
 
-  tags = {
-    Name = "${var.project_name}-vpc"
-  }
+  project_name         = var.project_name
+  availability_zones   = var.availability_zones
+  vpc_cidr             = "10.0.0.0/16"
+  public_subnet_cidrs  = ["10.0.1.0/24", "10.0.2.0/24"]
+  private_subnet_cidrs = ["10.0.10.0/24", "10.0.11.0/24"]
+  enable_nat_gateway   = true
 }
 
-# Internet Gateway
-resource "aws_internet_gateway" "main" {
-  vpc_id = aws_vpc.main.id
+# Storage Module
+module "storage" {
+  source = "./modules/storage"
 
-  tags = {
-    Name = "${var.project_name}-igw"
-  }
+  project_name        = var.project_name
+  bucket_name_prefix  = "${var.project_name}-email-storage"
+  bucket_purpose      = "email-storage"
+  enable_versioning   = true
+  block_public_access = true
 }
 
-# Public Subnets
-resource "aws_subnet" "public" {
-  count = 2
+# Messaging Module
+module "messaging" {
+  source = "./modules/messaging"
 
-  vpc_id                  = aws_vpc.main.id
-  cidr_block              = "10.0.${count.index + 1}.0/24"
-  availability_zone       = var.availability_zones[count.index]
-  map_public_ip_on_launch = true
-
-  tags = {
-    Name = "${var.project_name}-public-subnet-${count.index + 1}"
-    Type = "Public"
-  }
-}
-
-# Private Subnets
-resource "aws_subnet" "private" {
-  count = 2
-
-  vpc_id            = aws_vpc.main.id
-  cidr_block        = "10.0.${count.index + 10}.0/24"
-  availability_zone = var.availability_zones[count.index]
-
-  tags = {
-    Name = "${var.project_name}-private-subnet-${count.index + 1}"
-    Type = "Private"
-  }
-}
-
-# NAT Gateway
-resource "aws_eip" "nat" {
-  count = 1
-
-  domain = "vpc"
-  depends_on = [aws_internet_gateway.main]
-
-  tags = {
-    Name = "${var.project_name}-nat-eip"
-  }
-}
-
-resource "aws_nat_gateway" "main" {
-  count = 1
-
-  allocation_id = aws_eip.nat[0].id
-  subnet_id     = aws_subnet.public[0].id
-
-  tags = {
-    Name = "${var.project_name}-nat-gateway"
-  }
-
-  depends_on = [aws_internet_gateway.main]
-}
-
-# Route Tables
-resource "aws_route_table" "public" {
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.main.id
-  }
-
-  tags = {
-    Name = "${var.project_name}-public-rt"
-  }
-}
-
-resource "aws_route_table" "private" {
-  count = 2
-
-  vpc_id = aws_vpc.main.id
-
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[0].id
-  }
-
-  tags = {
-    Name = "${var.project_name}-private-rt-${count.index + 1}"
-  }
-}
-
-# Route Table Associations
-resource "aws_route_table_association" "public" {
-  count = 2
-
-  subnet_id      = aws_subnet.public[count.index].id
-  route_table_id = aws_route_table.public.id
-}
-
-resource "aws_route_table_association" "private" {
-  count = 2
-
-  subnet_id      = aws_subnet.private[count.index].id
-  route_table_id = aws_route_table.private[count.index].id
-}
-
-# SQS Queue
-resource "aws_sqs_queue" "email_queue" {
-  name                       = "${var.project_name}-email-queue"
+  project_name               = var.project_name
+  queue_name                 = "email-queue"
   visibility_timeout_seconds = 300
   message_retention_seconds  = 1209600
   receive_wait_time_seconds  = 20
-
-  tags = {
-    Name = "${var.project_name}-email-queue"
-  }
+  max_receive_count          = 3
 }
 
-# SQS Dead Letter Queue
-resource "aws_sqs_queue" "email_dlq" {
-  name                      = "${var.project_name}-email-dlq"
-  message_retention_seconds = 1209600
-
-  tags = {
-    Name = "${var.project_name}-email-dlq"
-  }
-}
-
-# SQS Redrive Policy
-resource "aws_sqs_queue_redrive_policy" "email_queue" {
-  queue_url = aws_sqs_queue.email_queue.id
-  redrive_policy = jsonencode({
-    deadLetterTargetArn = aws_sqs_queue.email_dlq.arn
-    maxReceiveCount     = 3
-  })
-}
-
-# S3 Bucket
-resource "aws_s3_bucket" "email_storage" {
-  bucket = "${var.project_name}-email-storage-${random_string.bucket_suffix.result}"
-
-  tags = {
-    Name = "${var.project_name}-email-storage"
-  }
-}
-
-resource "random_string" "bucket_suffix" {
-  length  = 8
-  special = false
-  upper   = false
-}
-
-resource "aws_s3_bucket_versioning" "email_storage" {
-  bucket = aws_s3_bucket.email_storage.id
-  versioning_configuration {
-    status = "Enabled"
-  }
-}
-
-resource "aws_s3_bucket_server_side_encryption_configuration" "email_storage" {
-  bucket = aws_s3_bucket.email_storage.id
-
-  rule {
-    apply_server_side_encryption_by_default {
-      sse_algorithm = "AES256"
-    }
-  }
-}
-
-resource "aws_s3_bucket_public_access_block" "email_storage" {
-  bucket = aws_s3_bucket.email_storage.id
-
-  block_public_acls       = true
-  block_public_policy     = true
-  ignore_public_acls      = true
-  restrict_public_buckets = true
-}
-
-# SSM Parameter for API Token
+# SSM Parameter for API Token (shared resource)
 resource "aws_ssm_parameter" "api_token" {
   name  = "/email-processor/api-token"
   type  = "SecureString"
@@ -216,48 +65,119 @@ resource "aws_ssm_parameter" "api_token" {
   }
 }
 
-# ECR Repositories
-resource "aws_ecr_repository" "microservice_1" {
-  name                 = "${var.project_name}-microservice-1"
-  image_tag_mutability = "MUTABLE"
+# ECS Cluster Module
+module "ecs_cluster" {
+  source = "./modules/ecs-cluster"
 
-  image_scanning_configuration {
-    scan_on_push = true
-  }
-
-  tags = {
-    Name = "${var.project_name}-microservice-1"
-  }
+  project_name              = var.project_name
+  enable_container_insights = true
 }
 
-resource "aws_ecr_repository" "microservice_2" {
-  name                 = "${var.project_name}-microservice-2"
-  image_tag_mutability = "MUTABLE"
+# Microservice 1 (API Service with ALB)
+module "microservice_1" {
+  source = "./modules/ecs-service"
 
-  image_scanning_configuration {
-    scan_on_push = true
-  }
+  project_name       = var.project_name
+  service_name       = "microservice-1"
+  aws_region         = var.aws_region
+  vpc_id             = module.networking.vpc_id
+  public_subnet_ids  = module.networking.public_subnet_ids
+  private_subnet_ids = module.networking.private_subnet_ids
+  cluster_id         = module.ecs_cluster.cluster_id
+  cluster_name       = module.ecs_cluster.cluster_name
 
-  tags = {
-    Name = "${var.project_name}-microservice-2"
-  }
+  # Container Configuration
+  container_port = 8080
+  cpu            = var.microservice_1_cpu
+  memory         = var.microservice_1_memory
+
+  # Scaling Configuration
+  desired_count = var.desired_count
+  min_capacity  = var.min_capacity
+  max_capacity  = var.max_capacity
+
+  # Load Balancer Configuration
+  enable_load_balancer = true
+  health_check_path    = "/api/health"
+
+  # Environment Variables
+  environment_variables = [
+    {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.aws_region
+    },
+    {
+      name  = "SQS_QUEUE_URL"
+      value = module.messaging.queue_url
+    },
+    {
+      name  = "SSM_PARAMETER_NAME"
+      value = aws_ssm_parameter.api_token.name
+    }
+  ]
+
+  # IAM Permissions
+  sqs_queue_arns = [
+    module.messaging.queue_arn,
+    module.messaging.dlq_arn
+  ]
+  ssm_parameter_arns = [aws_ssm_parameter.api_token.arn]
+  s3_bucket_arn      = ""
+
+  # Logging
+  log_retention_days = 7
 }
 
-# CloudWatch Log Groups
-resource "aws_cloudwatch_log_group" "microservice_1" {
-  name              = "/ecs/${var.project_name}-microservice-1"
-  retention_in_days = 7
+# Microservice 2 (Consumer Service without ALB)
+module "microservice_2" {
+  source = "./modules/ecs-service"
 
-  tags = {
-    Name = "${var.project_name}-microservice-1-logs"
-  }
-}
+  project_name       = var.project_name
+  service_name       = "microservice-2"
+  aws_region         = var.aws_region
+  vpc_id             = module.networking.vpc_id
+  public_subnet_ids  = module.networking.public_subnet_ids
+  private_subnet_ids = module.networking.private_subnet_ids
+  cluster_id         = module.ecs_cluster.cluster_id
+  cluster_name       = module.ecs_cluster.cluster_name
 
-resource "aws_cloudwatch_log_group" "microservice_2" {
-  name              = "/ecs/${var.project_name}-microservice-2"
-  retention_in_days = 7
+  # Container Configuration
+  container_port = 8080
+  cpu            = var.microservice_2_cpu
+  memory         = var.microservice_2_memory
 
-  tags = {
-    Name = "${var.project_name}-microservice-2-logs"
-  }
+  # Scaling Configuration
+  desired_count = var.desired_count
+  min_capacity  = var.min_capacity
+  max_capacity  = var.max_capacity
+
+  # No Load Balancer for this service
+  enable_load_balancer = false
+
+  # Environment Variables
+  environment_variables = [
+    {
+      name  = "AWS_DEFAULT_REGION"
+      value = var.aws_region
+    },
+    {
+      name  = "SQS_QUEUE_URL"
+      value = module.messaging.queue_url
+    },
+    {
+      name  = "S3_BUCKET_NAME"
+      value = module.storage.bucket_name
+    }
+  ]
+
+  # IAM Permissions
+  sqs_queue_arns = [
+    module.messaging.queue_arn,
+    module.messaging.dlq_arn
+  ]
+  ssm_parameter_arns = []
+  s3_bucket_arn      = module.storage.bucket_arn
+
+  # Logging
+  log_retention_days = 7
 }

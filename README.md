@@ -67,6 +67,8 @@ A cloud-native microservices architecture for processing email data using AWS se
 - **ECR**: Container image repositories
 - **CloudWatch**: Logging and monitoring
 
+**✨ Modular Structure**: The Terraform configuration uses reusable modules for easy scalability and maintenance. See [terraform/MODULES-README.md](terraform/MODULES-README.md) for details.
+
 ## Prerequisites
 
 - AWS CLI configured with appropriate permissions
@@ -104,11 +106,13 @@ A cloud-native microservices architecture for processing email data using AWS se
 
 ### 1. Infrastructure Deployment
 
+The Terraform configuration uses a modular structure for better maintainability and scalability. For detailed information about the modules, see [terraform/MODULES-README.md](terraform/MODULES-README.md).
+
 ```bash
 # Navigate to terraform directory
 cd terraform
 
-# Initialize Terraform
+# Initialize Terraform (downloads modules and providers)
 terraform init
 
 # Plan the deployment
@@ -117,6 +121,8 @@ terraform plan
 # Apply the infrastructure
 terraform apply
 ```
+
+**Adding a new microservice?** Simply add a new module block in `terraform/main.tf` - see the modules documentation for examples.
 
 ### 2. GitHub Secrets Configuration
 
