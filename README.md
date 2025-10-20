@@ -60,7 +60,7 @@ A cloud-native microservices architecture for processing email data using AWS se
 ### Infrastructure (Terraform)
 - **VPC**: Multi-AZ setup with public/private subnets
 - **ECS Fargate**: Serverless container hosting
-- **Application Load Balancer**: HTTP/HTTPS traffic routing
+- **Application Load Balancer**: HTTP traffic routing
 - **SQS**: Message queue with dead letter queue
 - **S3**: Email data storage with versioning and encryption
 - **SSM Parameter Store**: Secure token storage
