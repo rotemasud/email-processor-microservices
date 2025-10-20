@@ -5,22 +5,36 @@ A cloud-native microservices architecture for processing email data using AWS se
 ## Architecture Overview
 
 ```
+┌─────────────────┐
+│     Client      │
+│   (External)    │
+└────────┬────────┘
+         │
+         │ HTTP POST /api/email
+         │
+         ▼
+┌─────────────────┐
+│  Application    │
+│  Load Balancer  │
+│   (Public)      │
+└────────┬────────┘
+         │
+         │ Route to Target Group
+         │
+         ▼
 ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Client/API    │───▶│  Microservice 1 │───▶│     SQS Queue   │
-│   Gateway       │    │   (REST API)    │    │                 │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                │                        │
-                                ▼                        ▼
-                       ┌─────────────────┐    ┌─────────────────┐
-                       │  Application    │    │  Microservice 2 │
-                       │  Load Balancer  │    │ (SQS Consumer)  │
-                       └─────────────────┘    └─────────────────┘
-                                                        │
-                                                        ▼
-                                               ┌─────────────────┐
-                                               │   S3 Bucket     │
-                                               │ (Email Storage) │
-                                               └─────────────────┘
+│  Microservice 1 │───▶│   SQS Queue     │───▶│  Microservice 2 │
+│   (REST API)    │    │  (Message Bus)  │    │ (SQS Consumer)  │
+│  ECS Fargate    │    │                 │    │  ECS Fargate    │
+│ Private Subnet  │    └─────────────────┘    │ Private Subnet  │
+└─────────────────┘                            └────────┬────────┘
+         │                                              │
+         │ Validate Token                              │
+         ▼                                              │ Store Email
+┌─────────────────┐                            ┌───────▼─────────┐
+│  SSM Parameter  │                            │   S3 Bucket     │
+│  Store (Token)  │                            │ (Email Storage) │
+└─────────────────┘                            └─────────────────┘
 ```
 
 ## Components
@@ -194,29 +208,55 @@ Processes an email message and queues it for storage.
 
 ### CI/CD Pipeline
 
-The project includes GitHub Actions workflows for:
+The project includes **manual-only** GitHub Actions workflows to give you full control and save costs:
 
-1. **CI Pipeline** (`.github/workflows/ci.yml`):
+1. **CI Pipeline** (`.github/workflows/ci.yml`) - Manual Trigger Only:
    - Builds and tests both microservices
    - Creates Docker images
-   - Pushes images to ECR
+   - Optionally pushes images to ECR
    - Runs security scans
+   - **How to run**: Go to Actions → CI - Build and Test → Run workflow
+   - **Options**: 
+     - `skip_ecr_push`: Set to `true` to only build/test locally without pushing to ECR
 
-2. **CD Pipeline** (`.github/workflows/cd.yml`):
+2. **CD Pipeline** (`.github/workflows/cd.yml`) - Manual Trigger Only:
    - Deploys services to ECS Fargate
-   - Supports manual deployment with service selection
+   - Supports selective deployment (one or both services)
    - Waits for deployment completion
+   - **How to run**: Go to Actions → CD - Deploy to ECS → Run workflow
+   - **Options**:
+     - `service`: Choose which service to deploy (both, microservice-1, or microservice-2)
+     - `image_tag`: Specify which image tag to deploy (default: latest)
 
-### Manual Deployment
+### Manual Deployment Steps
 
 ```bash
-# Deploy infrastructure
+# Step 1: Deploy infrastructure with Terraform
 cd terraform
+terraform init
 terraform apply
 
-# Deploy services via GitHub Actions
-# Go to Actions tab and run "CD - Deploy to ECS" workflow
+# Step 2: Build and push Docker images via GitHub Actions
+# Go to: GitHub → Actions → "CI - Build and Test" → Run workflow
+# - Leave "skip_ecr_push" unchecked to push to ECR
+
+# Step 3: Deploy to ECS via GitHub Actions
+# Go to: GitHub → Actions → "CD - Deploy to ECS" → Run workflow
+# - Select "both" to deploy all services
+# - Use image tag "latest" or specify a specific SHA
+
+# Alternative: Deploy locally using AWS CLI
+# (See CLI-OPERATIONS-GUIDE.md for detailed commands)
 ```
+
+### Why Manual-Only Workflows?
+
+- 💰 **Cost Control**: Avoid unexpected charges from automatic builds/deployments
+- 🎯 **Precise Control**: Deploy exactly when you want to
+- 🔒 **Security**: No accidental deployments from experimental branches
+- 🧪 **Testing**: Test locally before pushing to AWS
+
+📖 **For detailed workflow instructions, see [WORKFLOW-GUIDE.md](WORKFLOW-GUIDE.md)**
 
 ## Monitoring and Logging
 

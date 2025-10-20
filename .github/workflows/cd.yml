@@ -1,5 +1,6 @@
 name: CD - Deploy to ECS
 
+# This workflow runs ONLY on manual trigger to give you full control over deployments
 on:
   workflow_dispatch:
     inputs:
@@ -17,21 +18,16 @@ on:
         required: false
         default: 'latest'
         type: string
-  push:
-    branches: [ main ]
-    paths-ignore:
-      - 'README.md'
-      - 'terraform/**'
 
 env:
-  AWS_REGION: eu-west-1
-  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.eu-west-1.amazonaws.com
+  AWS_REGION: us-west-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-west-1.amazonaws.com
   ECS_CLUSTER: email-processor-cluster
 
 jobs:
   deploy-microservice-1:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.service == 'both' || github.event.inputs.service == 'microservice-1' || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip microservice-1]')) }}
+    if: ${{ github.event.inputs.service == 'both' || github.event.inputs.service == 'microservice-1' }}
     
     steps:
     - name: Checkout code
@@ -47,11 +43,8 @@ jobs:
     - name: Set image tag
       id: set-image-tag
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
-        else
-          echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
-        fi
+        echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+        echo "Deploying microservice-1 with image tag: ${{ github.event.inputs.image_tag }}"
 
     - name: Deploy microservice-1 to ECS
       env:
@@ -87,7 +80,7 @@ jobs:
 
   deploy-microservice-2:
     runs-on: ubuntu-latest
-    if: ${{ github.event.inputs.service == 'both' || github.event.inputs.service == 'microservice-2' || (github.event_name == 'push' && !contains(github.event.head_commit.message, '[skip microservice-2]')) }}
+    if: ${{ github.event.inputs.service == 'both' || github.event.inputs.service == 'microservice-2' }}
     
     steps:
     - name: Checkout code
@@ -103,11 +96,8 @@ jobs:
     - name: Set image tag
       id: set-image-tag
       run: |
-        if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-          echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
-        else
-          echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
-        fi
+        echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+        echo "Deploying microservice-2 with image tag: ${{ github.event.inputs.image_tag }}"
 
     - name: Deploy microservice-2 to ECS
       env:
