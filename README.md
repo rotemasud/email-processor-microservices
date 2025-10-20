@@ -122,15 +122,6 @@ terraform apply
 
 **⚠️ IMPORTANT**: This project uses OIDC (OpenID Connect) for secure authentication with AWS.
 
-Configure the following secret in your GitHub repository (Settings → Secrets and variables → Actions):
-
-- `AWS_ACCOUNT_ID`: Your 12-digit AWS account ID (no access keys needed!)
-
-**How to get your AWS Account ID:**
-```bash
-aws sts get-caller-identity --query Account --output text
-```
-
 **Setting up OIDC in AWS (Required for Forkers):**
 
 If you forked this repo, you need to set up OIDC in your AWS account:
@@ -165,15 +156,6 @@ aws iam create-role --role-name GitHubActionsRole --assume-role-policy-document 
 # 3. Attach permissions (ECR, ECS, IAM PassRole)
 # Create appropriate policies for your role
 ```
-
-**Security Best Practices:**
-- ✅ OIDC provides temporary credentials (much more secure than access keys)
-- ✅ Credentials automatically rotate for each workflow run
-- ✅ No long-lived credentials stored in GitHub
-- ✅ Trust policy restricts which repository can access your AWS account
-- ✅ Use minimum required permissions (principle of least privilege)
-- ❌ Never commit credentials to the repository
-- ❌ Never share your secrets publicly
 
 ### 3. Local Development
 
@@ -252,7 +234,6 @@ The project includes **manual-only** GitHub Actions workflows to give you full c
    - Builds and tests both microservices
    - Creates Docker images
    - Optionally pushes images to ECR
-   - Runs security scans
    - **How to run**: Go to Actions → CI - Build and Test → Run workflow
    - **Options**: 
      - `skip_ecr_push`: Set to `true` to only build/test locally without pushing to ECR
@@ -286,15 +267,6 @@ terraform apply
 # Alternative: Deploy locally using AWS CLI
 # (See CLI-OPERATIONS-GUIDE.md for detailed commands)
 ```
-
-### Why Manual-Only Workflows?
-
-- 💰 **Cost Control**: Avoid unexpected charges from automatic builds/deployments
-- 🎯 **Precise Control**: Deploy exactly when you want to
-- 🔒 **Security**: No accidental deployments from experimental branches
-- 🧪 **Testing**: Test locally before pushing to AWS
-
-📖 **For detailed workflow instructions, see [WORKFLOW-GUIDE.md](WORKFLOW-GUIDE.md)**
 
 ## Monitoring and Logging
 
@@ -335,28 +307,6 @@ email-processor-microservices/
 │   └── cd.yml
 └── README.md
 ```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Token Validation Failures**:
-   - Verify SSM parameter exists and has correct value
-   - Check IAM permissions for SSM access
-
-2. **SQS Connection Issues**:
-   - Verify queue URL in environment variables
-   - Check IAM permissions for SQS access
-
-3. **S3 Upload Failures**:
-   - Verify bucket name and permissions
-   - Check IAM role has S3 write permissions
-
-4. **ECS Deployment Issues**:
-   - Check ECR repository exists
-   - Verify task definition and service configuration
-   - Review CloudWatch logs for container errors
-
 ### Logs and Debugging
 
 ```bash
@@ -369,14 +319,6 @@ aws ecs describe-services --cluster email-processor-cluster --services email-pro
 # View SQS queue attributes
 aws sqs get-queue-attributes --queue-url <queue-url> --attribute-names All
 ```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## License
 
