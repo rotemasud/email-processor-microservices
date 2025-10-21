@@ -37,14 +37,6 @@ class MessageProcessorTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        
-        // Mock the timer to execute the supplier directly (lenient to avoid stubbing conflicts)
-        lenient().when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
-                .thenAnswer(invocation -> {
-                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
-                    return supplier.get();
-                });
-        
         messageProcessor = new MessageProcessor(s3UploaderService, objectMapper, 
                 messagesProcessedSuccessCounter, messagesProcessedFailureCounter, messageProcessingTimer);
     }
@@ -88,6 +80,13 @@ class MessageProcessorTest {
         String invalidMessageBody = "{ invalid json }";
         String correlationId = "test-correlation-id";
 
+        // Stub the timer to execute the supplier
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
+
         // When
         boolean result = messageProcessor.processMessage(invalidMessageBody, correlationId);
 
@@ -107,6 +106,13 @@ class MessageProcessorTest {
 
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
+
+        // Stub the timer to execute the supplier
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
@@ -128,6 +134,13 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
+        // Stub the timer to execute the supplier
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
+
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
 
@@ -148,7 +161,14 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        // Stub to throw exception - use when().thenThrow() with lenient class mock
+        // Stub the timer to execute the supplier
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
+
+        // Stub S3 to throw exception
         when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
                 .thenThrow(new RuntimeException("S3 connection failed"));
 
