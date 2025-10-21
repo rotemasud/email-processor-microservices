@@ -94,9 +94,7 @@ A cloud-native microservices architecture for processing email data using AWS se
    - Edit both `.github/workflows/ci.yml` and `.github/workflows/cd.yml`
    - Change `role-to-assume` ARN to your IAM role ARN
    - Update `github.repository_owner` in `ci.yml` to your GitHub username
-3. **Configure GitHub Secrets:**
-   - Add `AWS_ACCOUNT_ID` secret (just your account ID, no access keys needed!)
-4. **Deploy infrastructure:**
+3. **Deploy infrastructure:**
    - Update `terraform/terraform.tfvars` with your desired configuration
    - Run `terraform apply`
 
