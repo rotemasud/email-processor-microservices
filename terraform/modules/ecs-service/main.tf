@@ -177,6 +177,27 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution_role_policy" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# Additional policy for task execution role to access CloudWatch
+resource "aws_iam_role_policy" "ecs_task_execution_cloudwatch" {
+  name = "${var.project_name}-${var.service_name}-exec-cloudwatch"
+  role = aws_iam_role.ecs_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents"
+        ]
+        Resource = "${aws_cloudwatch_log_group.main.arn}:*"
+      }
+    ]
+  })
+}
+
 # IAM Role for ECS Task
 resource "aws_iam_role" "ecs_task_role" {
   name = "${var.project_name}-${var.service_name}-task-role"
@@ -249,6 +270,14 @@ resource "aws_iam_role_policy_attachment" "ecs_task_role_policy" {
   policy_arn = aws_iam_policy.ecs_task_policy.arn
 }
 
+# Attach Prometheus Remote Write Policy if Prometheus is enabled
+resource "aws_iam_role_policy_attachment" "prometheus_remote_write" {
+  count = var.enable_prometheus ? 1 : 0
+
+  role       = aws_iam_role.ecs_task_role.name
+  policy_arn = var.prometheus_remote_write_policy_arn
+}
+
 # ECS Task Definition
 resource "aws_ecs_task_definition" "main" {
   family                   = "${var.project_name}-${var.service_name}"
@@ -259,7 +288,7 @@ resource "aws_ecs_task_definition" "main" {
   execution_role_arn       = aws_iam_role.ecs_task_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
-  container_definitions = jsonencode([
+  container_definitions = jsonencode(concat([
     {
       name  = var.service_name
       image = var.container_image != "" ? var.container_image : "${aws_ecr_repository.main.repository_url}:latest"
@@ -284,7 +313,82 @@ resource "aws_ecs_task_definition" "main" {
 
       essential = true
     }
-  ])
+    ],
+    var.enable_prometheus ? [
+      {
+        name  = "adot-collector"
+        image = "public.ecr.aws/aws-observability/aws-otel-collector:v0.40.0"
+
+        command = ["--config=env:AOT_CONFIG_CONTENT"]
+
+        environment = [
+          {
+            name  = "AWS_REGION"
+            value = var.aws_region
+          },
+          {
+            name  = "SERVICE_NAME"
+            value = var.service_name
+          },
+          {
+            name = "AOT_CONFIG_CONTENT"
+            value = <<-EOT
+receivers:
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'spring-boot-metrics'
+          scrape_interval: 30s
+          metrics_path: '/actuator/prometheus'
+          static_configs:
+            - targets: ['localhost:${var.container_port}']
+
+processors:
+  batch:
+    timeout: 60s
+  resource:
+    attributes:
+      - key: service.name
+        value: ${var.service_name}
+        action: upsert
+
+exporters:
+  prometheusremotewrite:
+    endpoint: ${var.prometheus_remote_write_url}
+    auth:
+      authenticator: sigv4auth
+
+extensions:
+  sigv4auth:
+    region: ${var.aws_region}
+    service: aps
+  health_check:
+
+service:
+  extensions: [sigv4auth, health_check]
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      processors: [batch, resource]
+      exporters: [prometheusremotewrite]
+EOT
+          }
+        ]
+
+        logConfiguration = {
+          logDriver = "awslogs"
+          options = {
+            awslogs-create-group  = "true"
+            awslogs-group         = aws_cloudwatch_log_group.main.name
+            awslogs-region        = var.aws_region
+            awslogs-stream-prefix = "adot"
+          }
+        }
+
+        essential = false
+      }
+    ] : []
+  ))
 
   tags = {
     Name = "${var.project_name}-${var.service_name}-task"

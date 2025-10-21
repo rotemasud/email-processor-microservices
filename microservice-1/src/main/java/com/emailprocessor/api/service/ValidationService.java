@@ -1,5 +1,6 @@
 package com.emailprocessor.api.service;
 
+import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,10 +19,20 @@ public class ValidationService {
     private final String parameterName;
     private final ConcurrentHashMap<String, String> tokenCache = new ConcurrentHashMap<>();
     private static final String CACHE_KEY = "api_token";
+    private final Counter validationSuccessCounter;
+    private final Counter tokenValidationFailureCounter;
+    private final Counter emailDataValidationFailureCounter;
     
-    public ValidationService(SsmClient ssmClient, @Value("${ssm.parameter-name}") String parameterName) {
+    public ValidationService(SsmClient ssmClient, 
+                            @Value("${ssm.parameter-name}") String parameterName,
+                            Counter validationSuccessCounter,
+                            Counter tokenValidationFailureCounter,
+                            Counter emailDataValidationFailureCounter) {
         this.ssmClient = ssmClient;
         this.parameterName = parameterName;
+        this.validationSuccessCounter = validationSuccessCounter;
+        this.tokenValidationFailureCounter = tokenValidationFailureCounter;
+        this.emailDataValidationFailureCounter = emailDataValidationFailureCounter;
         loadTokenFromSSM();
     }
     
@@ -36,17 +47,20 @@ public class ValidationService {
             
             if (cachedToken == null) {
                 log.error("Failed to retrieve token from SSM");
+                tokenValidationFailureCounter.increment();
                 return false;
             }
             
             boolean isValid = cachedToken.equals(providedToken);
             if (!isValid) {
                 log.warn("Token validation failed for provided token");
+                tokenValidationFailureCounter.increment();
             }
             
             return isValid;
         } catch (Exception e) {
             log.error("Error validating token", e);
+            tokenValidationFailureCounter.increment();
             return false;
         }
     }
@@ -54,6 +68,7 @@ public class ValidationService {
     public boolean validateEmailData(com.emailprocessor.api.dto.EmailRequest.EmailData data) {
         if (data == null) {
             log.warn("Email data is null");
+            emailDataValidationFailureCounter.increment();
             return false;
         }
         
@@ -66,6 +81,7 @@ public class ValidationService {
         if (!hasSubject || !hasSender || !hasTimestream || !hasContent) {
             log.warn("Missing required email fields - subject: {}, sender: {}, timestream: {}, content: {}", 
                     hasSubject, hasSender, hasTimestream, hasContent);
+            emailDataValidationFailureCounter.increment();
             return false;
         }
         
@@ -74,13 +90,16 @@ public class ValidationService {
             long timestamp = Long.parseLong(data.getEmailTimestream());
             if (timestamp <= 0) {
                 log.warn("Invalid timestamp: {}", timestamp);
+                emailDataValidationFailureCounter.increment();
                 return false;
             }
         } catch (NumberFormatException e) {
             log.warn("Invalid timestamp format: {}", data.getEmailTimestream());
+            emailDataValidationFailureCounter.increment();
             return false;
         }
         
+        validationSuccessCounter.increment();
         return true;
     }
     

@@ -74,3 +74,24 @@ output "ecr_repository_2_url" {
   description = "URL of the ECR repository for microservice 2"
   value       = module.microservice_2.ecr_repository_url
 }
+
+# Monitoring Outputs
+output "prometheus_workspace_id" {
+  description = "AWS Managed Prometheus workspace ID"
+  value       = module.monitoring.prometheus_workspace_id
+}
+
+output "prometheus_endpoint" {
+  description = "AWS Managed Prometheus query endpoint"
+  value       = module.monitoring.prometheus_endpoint
+}
+
+output "grafana_workspace_endpoint" {
+  description = "AWS Managed Grafana workspace URL"
+  value       = module.monitoring.grafana_workspace_endpoint
+}
+
+output "grafana_workspace_id" {
+  description = "AWS Managed Grafana workspace ID"
+  value       = module.monitoring.grafana_workspace_id
+}

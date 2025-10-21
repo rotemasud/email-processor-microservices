@@ -167,3 +167,21 @@ variable "autoscaling_target_value" {
   default     = 70.0
 }
 
+variable "prometheus_remote_write_url" {
+  description = "AWS Managed Prometheus remote write endpoint URL"
+  type        = string
+  default     = ""
+}
+
+variable "prometheus_remote_write_policy_arn" {
+  description = "ARN of the Prometheus remote write IAM policy"
+  type        = string
+  default     = ""
+}
+
+variable "enable_prometheus" {
+  description = "Enable Prometheus metrics collection with ADOT sidecar"
+  type        = bool
+  default     = true
+}
+

@@ -1,0 +1,196 @@
+{
+  "dashboard": {
+    "title": "Email Processor - Business Metrics",
+    "tags": ["business", "microservices", "email-processor"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "SQS Messages Sent (Microservice-1)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(sqs_messages_sent_total{service=\"microservice-1\"}[5m])",
+            "legendFormat": "Messages Sent/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Messages/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "SQS Message Send Failures (Microservice-1)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "rate(sqs_messages_sent_failure_total{service=\"microservice-1\"}[5m])",
+            "legendFormat": "Send Failures/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Failures/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "Validation Success/Failure (Microservice-1)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(validation_success_total{service=\"microservice-1\"}[5m])",
+            "legendFormat": "Validation Success/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(validation_failure_total{service=\"microservice-1\"}[5m])",
+            "legendFormat": "Validation Failures/sec - {{type}}",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Validations/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "SQS Publish Duration (Microservice-1)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(sqs_publish_duration_seconds_bucket{service=\"microservice-1\"}[5m]))",
+            "legendFormat": "SQS Publish Duration (p95)",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(sqs_publish_duration_seconds_bucket{service=\"microservice-1\"}[5m]))",
+            "legendFormat": "SQS Publish Duration (p50)",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Duration"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "SQS Messages Received (Microservice-2)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(sqs_messages_received_total{service=\"microservice-2\"}[5m])",
+            "legendFormat": "Messages Received/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Messages/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "SQS Message Processing (Microservice-2)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(sqs_messages_processed_total{service=\"microservice-2\",status=\"success\"}[5m])",
+            "legendFormat": "Processed Successfully/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(sqs_messages_processed_total{service=\"microservice-2\",status=\"failure\"}[5m])",
+            "legendFormat": "Processing Failures/sec",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Messages/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 7,
+        "title": "S3 Uploads (Microservice-2)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 24},
+        "targets": [
+          {
+            "expr": "rate(s3_uploads_total{service=\"microservice-2\",status=\"success\"}[5m])",
+            "legendFormat": "S3 Uploads Success/sec",
+            "refId": "A"
+          },
+          {
+            "expr": "rate(s3_uploads_total{service=\"microservice-2\",status=\"failure\"}[5m])",
+            "legendFormat": "S3 Upload Failures/sec",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Uploads/sec"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 8,
+        "title": "S3 Upload Duration (Microservice-2)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 24},
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(s3_upload_duration_seconds_bucket{service=\"microservice-2\"}[5m]))",
+            "legendFormat": "S3 Upload Duration (p95)",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.50, rate(s3_upload_duration_seconds_bucket{service=\"microservice-2\"}[5m]))",
+            "legendFormat": "S3 Upload Duration (p50)",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Duration"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 9,
+        "title": "S3 Upload File Size (Microservice-2)",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 24, "x": 0, "y": 32},
+        "targets": [
+          {
+            "expr": "s3_upload_file_size_bytes_sum{service=\"microservice-2\"} / s3_upload_file_size_bytes_count{service=\"microservice-2\"}",
+            "legendFormat": "Average File Size",
+            "refId": "A"
+          },
+          {
+            "expr": "s3_upload_file_size_bytes_max{service=\"microservice-2\"}",
+            "legendFormat": "Max File Size",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "File Size"},
+          {"format": "short"}
+        ]
+      }
+    ]
+  }
+}
+

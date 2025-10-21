@@ -1,0 +1,130 @@
+{
+  "dashboard": {
+    "title": "Email Processor - JVM Metrics",
+    "tags": ["jvm", "microservices", "email-processor"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "JVM Memory Used",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+        "targets": [
+          {
+            "expr": "jvm_memory_used_bytes{area=\"heap\"}",
+            "legendFormat": "{{service}} - Heap Used",
+            "refId": "A"
+          },
+          {
+            "expr": "jvm_memory_used_bytes{area=\"nonheap\"}",
+            "legendFormat": "{{service}} - Non-Heap Used",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 2,
+        "title": "JVM Memory Max",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+        "targets": [
+          {
+            "expr": "jvm_memory_max_bytes{area=\"heap\"}",
+            "legendFormat": "{{service}} - Heap Max",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "bytes", "label": "Memory"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 3,
+        "title": "GC Time",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_sum[5m])",
+            "legendFormat": "{{service}} - {{action}} - {{cause}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "s", "label": "Time"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 4,
+        "title": "JVM Threads",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+        "targets": [
+          {
+            "expr": "jvm_threads_live_threads",
+            "legendFormat": "{{service}} - Live Threads",
+            "refId": "A"
+          },
+          {
+            "expr": "jvm_threads_daemon_threads",
+            "legendFormat": "{{service}} - Daemon Threads",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "Threads"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 5,
+        "title": "CPU Usage",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 0, "y": 16},
+        "targets": [
+          {
+            "expr": "system_cpu_usage",
+            "legendFormat": "{{service}} - System CPU",
+            "refId": "A"
+          },
+          {
+            "expr": "process_cpu_usage",
+            "legendFormat": "{{service}} - Process CPU",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {"format": "percentunit", "label": "CPU %"},
+          {"format": "short"}
+        ]
+      },
+      {
+        "id": 6,
+        "title": "Garbage Collection Count",
+        "type": "graph",
+        "gridPos": {"h": 8, "w": 12, "x": 12, "y": 16},
+        "targets": [
+          {
+            "expr": "rate(jvm_gc_pause_seconds_count[5m])",
+            "legendFormat": "{{service}} - {{action}} - {{cause}}",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {"format": "short", "label": "GC/sec"},
+          {"format": "short"}
+        ]
+      }
+    ]
+  }
+}
+

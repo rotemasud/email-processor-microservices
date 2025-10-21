@@ -66,6 +66,9 @@ A cloud-native microservices architecture for processing email data using AWS se
 - **SSM Parameter Store**: Secure token storage
 - **ECR**: Container image repositories
 - **CloudWatch**: Logging and monitoring
+- **AWS Managed Prometheus**: Metrics collection and storage
+- **AWS Managed Grafana**: Metrics visualization and dashboards
+- **AWS Distro for OpenTelemetry (ADOT)**: Metrics collection from services
 
 ## Prerequisites
 
@@ -211,6 +214,53 @@ curl -X POST http://localhost:8080/api/email \
     "token": "$DJISA<$#45ex3RtYr"
   }'
 ```
+
+## Monitoring & Observability
+
+This project includes comprehensive monitoring with AWS Managed Prometheus and Grafana.
+
+### Metrics Endpoints
+
+Both microservices expose Prometheus metrics at:
+```
+http://<service-url>:8080/actuator/prometheus
+```
+
+### Available Metrics
+
+**Microservice-1 (API Service):**
+- SQS message publishing metrics (count, failures, duration)
+- Validation metrics (success/failure rates by type)
+- HTTP request metrics (rate, latency, status codes)
+- JVM metrics (memory, GC, threads, CPU)
+
+**Microservice-2 (Consumer Service):**
+- SQS message consumption metrics (received, processed, failures)
+- S3 upload metrics (count, duration, file sizes)
+- Message processing duration
+- JVM metrics (memory, GC, threads, CPU)
+
+### Accessing Grafana
+
+After deploying infrastructure:
+
+```bash
+# Get Grafana workspace URL
+cd terraform
+terraform output grafana_workspace_endpoint
+```
+
+Navigate to the URL and sign in with AWS SSO credentials.
+
+### Pre-built Dashboards
+
+Three comprehensive dashboards are included in `grafana-dashboards/`:
+
+1. **JVM Dashboard**: Memory usage, garbage collection, thread metrics, CPU
+2. **HTTP Metrics Dashboard**: Request rates, latencies, status codes, errors
+3. **Business Metrics Dashboard**: SQS, S3, and validation-specific metrics
+
+See [MONITORING.md](MONITORING.md) for detailed monitoring documentation, dashboard import instructions, and example PromQL queries.
 
 ## API Documentation
 

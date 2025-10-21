@@ -1,6 +1,7 @@
 package com.emailprocessor.processor.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -20,15 +21,18 @@ public class SqsPollerService {
     private final String queueUrl;
     private final MessageProcessor messageProcessor;
     private final ObjectMapper objectMapper;
+    private final Counter messagesReceivedCounter;
     
     public SqsPollerService(SqsClient sqsClient,
                            @Value("${sqs.queue-url}") String queueUrl,
                            MessageProcessor messageProcessor,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper,
+                           Counter sqsMessagesReceivedCounter) {
         this.sqsClient = sqsClient;
         this.queueUrl = queueUrl;
         this.messageProcessor = messageProcessor;
         this.objectMapper = objectMapper;
+        this.messagesReceivedCounter = sqsMessagesReceivedCounter;
     }
     
     @Scheduled(fixedRate = 30000) // Poll every 30 seconds
@@ -52,6 +56,7 @@ public class SqsPollerService {
             }
             
             log.info("Received {} messages from SQS", messages.size());
+            messagesReceivedCounter.increment(messages.size());
             
             for (Message message : messages) {
                 try {

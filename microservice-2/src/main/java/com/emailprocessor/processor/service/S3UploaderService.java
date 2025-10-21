@@ -2,6 +2,9 @@ package com.emailprocessor.processor.service;
 
 import com.emailprocessor.processor.dto.EmailMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Timer;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -23,53 +26,73 @@ public class S3UploaderService {
     private final S3Client s3Client;
     private final String bucketName;
     private final ObjectMapper objectMapper;
+    private final Counter s3UploadsSuccessCounter;
+    private final Counter s3UploadsFailureCounter;
+    private final Timer s3UploadTimer;
+    private final DistributionSummary s3FileSizeSummary;
     
     public S3UploaderService(S3Client s3Client,
                             @Value("${s3.bucket-name}") String bucketName,
-                            ObjectMapper objectMapper) {
+                            ObjectMapper objectMapper,
+                            Counter s3UploadsSuccessCounter,
+                            Counter s3UploadsFailureCounter,
+                            Timer s3UploadTimer,
+                            DistributionSummary s3FileSizeSummary) {
         this.s3Client = s3Client;
         this.bucketName = bucketName;
         this.objectMapper = objectMapper;
+        this.s3UploadsSuccessCounter = s3UploadsSuccessCounter;
+        this.s3UploadsFailureCounter = s3UploadsFailureCounter;
+        this.s3UploadTimer = s3UploadTimer;
+        this.s3FileSizeSummary = s3FileSizeSummary;
     }
     
     public String uploadToS3(EmailMessage emailMessage, String correlationId) {
-        try {
-            // Generate S3 key with path structure: emails/{year}/{month}/{day}/{timestamp}-{sender}.json
-            String s3Key = generateS3Key(emailMessage);
-            
-            // Create enhanced message with metadata
-            Map<String, Object> enhancedMessage = new HashMap<>();
-            enhancedMessage.put("emailSubject", emailMessage.getEmailSubject());
-            enhancedMessage.put("emailSender", emailMessage.getEmailSender());
-            enhancedMessage.put("emailTimestream", emailMessage.getEmailTimestream());
-            enhancedMessage.put("emailContent", emailMessage.getEmailContent());
-            enhancedMessage.put("correlationId", correlationId);
-            enhancedMessage.put("originalTimestamp", emailMessage.getTimestamp());
-            enhancedMessage.put("processedAt", System.currentTimeMillis());
-            enhancedMessage.put("s3Key", s3Key);
-            
-            String jsonContent = objectMapper.writeValueAsString(enhancedMessage);
-            
-            // Upload to S3
-            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
-                    .key(s3Key)
-                    .contentType("application/json")
-                    .metadata(createMetadata(emailMessage, correlationId))
-                    .build();
-            
-            PutObjectResponse response = s3Client.putObject(putObjectRequest, 
-                    software.amazon.awssdk.core.sync.RequestBody.fromString(jsonContent));
-            
-            log.info("Successfully uploaded email to S3. Key: {}, ETag: {}, CorrelationId: {}", 
-                    s3Key, response.eTag(), correlationId);
-            
-            return s3Key;
-            
-        } catch (Exception e) {
-            log.error("Error uploading email to S3. CorrelationId: {}", correlationId, e);
-            throw new RuntimeException("Failed to upload email to S3", e);
-        }
+        return s3UploadTimer.record(() -> {
+            try {
+                // Generate S3 key with path structure: emails/{year}/{month}/{day}/{timestamp}-{sender}.json
+                String s3Key = generateS3Key(emailMessage);
+                
+                // Create enhanced message with metadata
+                Map<String, Object> enhancedMessage = new HashMap<>();
+                enhancedMessage.put("emailSubject", emailMessage.getEmailSubject());
+                enhancedMessage.put("emailSender", emailMessage.getEmailSender());
+                enhancedMessage.put("emailTimestream", emailMessage.getEmailTimestream());
+                enhancedMessage.put("emailContent", emailMessage.getEmailContent());
+                enhancedMessage.put("correlationId", correlationId);
+                enhancedMessage.put("originalTimestamp", emailMessage.getTimestamp());
+                enhancedMessage.put("processedAt", System.currentTimeMillis());
+                enhancedMessage.put("s3Key", s3Key);
+                
+                String jsonContent = objectMapper.writeValueAsString(enhancedMessage);
+                
+                // Track file size
+                s3FileSizeSummary.record(jsonContent.getBytes().length);
+                
+                // Upload to S3
+                PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                        .bucket(bucketName)
+                        .key(s3Key)
+                        .contentType("application/json")
+                        .metadata(createMetadata(emailMessage, correlationId))
+                        .build();
+                
+                PutObjectResponse response = s3Client.putObject(putObjectRequest, 
+                        software.amazon.awssdk.core.sync.RequestBody.fromString(jsonContent));
+                
+                s3UploadsSuccessCounter.increment();
+                
+                log.info("Successfully uploaded email to S3. Key: {}, ETag: {}, CorrelationId: {}", 
+                        s3Key, response.eTag(), correlationId);
+                
+                return s3Key;
+                
+            } catch (Exception e) {
+                s3UploadsFailureCounter.increment();
+                log.error("Error uploading email to S3. CorrelationId: {}", correlationId, e);
+                throw new RuntimeException("Failed to upload email to S3", e);
+            }
+        });
     }
     
     private String generateS3Key(EmailMessage emailMessage) {

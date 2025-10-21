@@ -73,6 +73,15 @@ module "ecs_cluster" {
   enable_container_insights = true
 }
 
+# Monitoring Module (Prometheus & Grafana)
+module "monitoring" {
+  source = "./modules/monitoring"
+
+  project_name           = var.project_name
+  workspace_alias        = "${var.project_name}-metrics"
+  grafana_workspace_name = "${var.project_name}-grafana"
+}
+
 # Microservice 1 (API Service with ALB)
 module "microservice_1" {
   source = "./modules/ecs-service"
@@ -126,6 +135,11 @@ module "microservice_1" {
 
   # Logging
   log_retention_days = 7
+
+  # Monitoring (Prometheus & Grafana)
+  enable_prometheus                  = true
+  prometheus_remote_write_url        = module.monitoring.prometheus_remote_write_url
+  prometheus_remote_write_policy_arn = module.monitoring.prometheus_remote_write_policy_arn
 }
 
 # Microservice 2 (Consumer Service without ALB)
@@ -180,4 +194,9 @@ module "microservice_2" {
 
   # Logging
   log_retention_days = 7
+
+  # Monitoring (Prometheus & Grafana)
+  enable_prometheus                  = true
+  prometheus_remote_write_url        = module.monitoring.prometheus_remote_write_url
+  prometheus_remote_write_policy_arn = module.monitoring.prometheus_remote_write_policy_arn
 }
