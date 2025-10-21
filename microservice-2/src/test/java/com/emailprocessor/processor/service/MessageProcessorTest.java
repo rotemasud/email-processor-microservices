@@ -18,16 +18,16 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class MessageProcessorTest {
 
-    @Mock
+    @Mock(lenient = true)
     private S3UploaderService s3UploaderService;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesProcessedSuccessCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesProcessedFailureCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Timer messageProcessingTimer;
 
     private MessageProcessor messageProcessor;
@@ -36,8 +36,8 @@ class MessageProcessorTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        // Mock the timer to execute the supplier directly (lenient to avoid stubbing conflicts)
-        lenient().when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+        // Mock the timer to execute the supplier directly
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
                 .thenAnswer(invocation -> {
                     java.util.function.Supplier<?> supplier = invocation.getArgument(0);
                     return supplier.get();
@@ -60,8 +60,8 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        doReturn("emails/2023/09/01/1693561101-john_doe.json")
-                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
+        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
+                .thenReturn("emails/2023/09/01/1693561101-john_doe.json");
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
@@ -137,8 +137,8 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        doThrow(new RuntimeException("S3 connection failed"))
-                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
+        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
+                .thenThrow(new RuntimeException("S3 connection failed"));
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
