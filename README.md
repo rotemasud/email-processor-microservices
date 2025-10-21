@@ -117,7 +117,7 @@ Processes an email message and queues it for storage.
 **If you're forking this repository:**
 - ✅ **Your AWS credentials are safe** - This repo does NOT contain any AWS credentials
 - ⚠️ **You MUST set up your own AWS account and credentials** to use this project
-- 💰 **Running this infrastructure will incur AWS charges** (~$80-100/month if running 24/7)
+- 💰 **Running this infrastructure will incur AWS charges** (~$125-190/month if running 24/7)
 
 **For detailed setup instructions**, see [FORKING-GUIDE.md](FORKING-GUIDE.md) which includes:
 - AWS OIDC and IAM role configuration

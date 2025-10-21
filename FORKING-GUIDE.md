@@ -4,7 +4,7 @@ If you forked this repository and want to run it on your own AWS account, follow
 
 ## ⚠️ Important Notes
 
-- **Cost Warning**: Running this infrastructure will cost approximately $80-100/month if running 24/7
+- **Cost Warning**: Running this infrastructure will cost approximately $125-190/month if running 24/7
 - **Your Responsibility**: You're responsible for all AWS charges incurred
 - **Manual Setup Required**: You need to configure your own AWS account and update several files
 
@@ -184,11 +184,14 @@ terraform apply
 This will create:
 - VPC with public and private subnets
 - ECR repositories for both microservices
-- ECS cluster and services
-- Application Load Balancer
+- ECS cluster and services (2 microservices + Grafana)
+- Application Load Balancer (for public access)
 - SQS queue and Dead Letter Queue
-- S3 bucket for email storage
-- SSM parameter for API token
+- S3 buckets (email storage + Grafana dashboards)
+- SSM parameters (API token + Grafana password)
+- AWS Managed Prometheus workspace
+- Grafana on ECS with EFS persistent storage
+- Pre-configured Grafana dashboards (auto-provisioned)
 - All necessary IAM roles and security groups
 
 ### Step 6: Test Your Setup
@@ -253,6 +256,32 @@ curl -X POST http://$ALB_URL/api/email \
 
 ---
 
+## 📊 Accessing Grafana
+
+After deploying the infrastructure, you can access the monitoring dashboards:
+
+```bash
+# Get Grafana URL
+cd terraform
+terraform output grafana_url
+
+# Get Grafana admin password
+aws ssm get-parameter --name /email-processor/grafana/admin-password --with-decryption --query 'Parameter.Value' --output text
+```
+
+**Login credentials:**
+- **Username**: `admin`
+- **Password**: Retrieved from SSM command above
+
+**Pre-built dashboards** are automatically provisioned:
+1. JVM Dashboard - Memory, GC, threads, CPU metrics
+2. HTTP Metrics Dashboard - Request rates, latencies, status codes
+3. Business Metrics Dashboard - SQS, S3, validation metrics
+
+Navigate to **Dashboards** in Grafana to view them (no manual import needed).
+
+---
+
 ## 🔍 Troubleshooting
 
 ### Issue: Workflow fails with "Not authorized to perform sts:AssumeRoleWithWebIdentity"
@@ -287,6 +316,38 @@ curl -X POST http://$ALB_URL/api/email \
 - Check you have sufficient permissions (Admin recommended for initial setup)
 - Verify the region in `terraform.tfvars` is valid
 
+### Issue: Can't access Grafana or dashboards not showing
+
+**Cause**: Grafana service not running or dashboards not provisioned.
+
+**Solution**:
+```bash
+# Check Grafana service status
+aws ecs describe-services --cluster email-processor-cluster --services email-processor-grafana
+
+# Check Grafana logs
+aws logs tail /ecs/email-processor-grafana --follow
+
+# Verify dashboards were uploaded to S3
+aws s3 ls s3://email-processor-grafana-dashboards/
+```
+
+### Issue: No metrics in Prometheus/Grafana
+
+**Cause**: ADOT collector not scraping metrics or Prometheus workspace issue.
+
+**Solution**:
+```bash
+# Check microservice logs for ADOT collector
+aws logs tail /ecs/email-processor-microservice-1 --follow
+
+# Verify Prometheus workspace exists
+aws amp list-workspaces
+
+# Check if metrics endpoint is accessible (from within ECS task)
+# The endpoint should be: http://localhost:8080/actuator/prometheus
+```
+
 ---
 
 ## 💰 Cost Management
@@ -295,30 +356,50 @@ curl -X POST http://$ALB_URL/api/email \
 
 | Service | Estimated Cost |
 |---------|----------------|
-| ECS Fargate (2 tasks) | $30-40 |
+| ECS Fargate (3 tasks: 2 microservices + Grafana) | $50-70 |
 | Application Load Balancer | $20-25 |
 | NAT Gateway | $30-35 |
+| AWS Managed Prometheus | $20-40 |
+| EFS (Grafana persistent storage) | $1-5 |
 | S3 Storage | $1-5 |
-| Other (ECR, SQS, logs) | $5-10 |
-| **Total** | **~$80-100/month** |
+| Other (ECR, SQS, CloudWatch logs) | $5-10 |
+| **Total** | **~$125-190/month** |
 
 ### Cost Reduction Tips:
 
-1. **Stop services when not in use:**
+1. **Stop all services when not in use:**
    ```bash
+   # Stop all 3 ECS services
    aws ecs update-service --cluster email-processor-cluster \
      --service email-processor-microservice-1 --desired-count 0
+   
+   aws ecs update-service --cluster email-processor-cluster \
+     --service email-processor-microservice-2 --desired-count 0
+   
+   aws ecs update-service --cluster email-processor-cluster \
+     --service email-processor-grafana --desired-count 0
+   ```
+   **Saves:** ~$50-70/month (ECS tasks)
+
+2. **Delete NAT Gateway when not needed** (recreate when needed)
+   ```bash
+   # Note: This requires manual intervention in AWS console or Terraform
+   # NAT Gateway is the most expensive single resource (~$30-35/month)
    ```
 
-2. **Use smaller instance sizes** (update in `terraform/variables.tf`)
+3. **Use smaller Fargate task sizes** (update in `terraform/variables.tf`)
+   - Current: 512 CPU / 1024 MB for microservices
+   - Reduce to: 256 CPU / 512 MB if sufficient
 
-3. **Deploy to a cheaper region** (update in `terraform.tfvars`)
+4. **Deploy to a cheaper region** (update in `terraform.tfvars`)
+   - Consider: us-east-1 (typically cheapest)
 
-4. **Clean up when done:**
+5. **Clean up completely when done:**
    ```bash
    cd terraform
    terraform destroy
    ```
+   **Important:** This deletes ALL resources including data in S3
 
 ---
 
