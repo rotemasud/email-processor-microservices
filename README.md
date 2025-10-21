@@ -270,13 +270,13 @@ Access Grafana at the URL above and log in with:
 
 ### Pre-built Dashboards
 
-Three comprehensive dashboards are included in `grafana-dashboards/`:
+Three comprehensive dashboards are **automatically provisioned** when Grafana starts:
 
 1. **JVM Dashboard** (`jvm-dashboard.json`): Memory usage, garbage collection, thread metrics, CPU
 2. **HTTP Metrics Dashboard** (`http-metrics-dashboard.json`): Request rates, latencies, status codes, errors
 3. **Business Metrics Dashboard** (`business-metrics-dashboard.json`): SQS, S3, and validation-specific metrics
 
-Import these dashboards in Grafana via **Dashboards → Import** to start monitoring your services.
+The dashboards are automatically loaded from S3 on Grafana startup - no manual import needed! Just navigate to **Dashboards** in Grafana to view them.
 
 ### Logs and Debugging
 
