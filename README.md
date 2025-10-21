@@ -67,7 +67,7 @@ A cloud-native microservices architecture for processing email data using AWS se
 - **ECR**: Container image repositories
 - **CloudWatch**: Logging and monitoring
 - **AWS Managed Prometheus**: Metrics collection and storage
-- **Grafana on ECS**: Self-hosted Grafana for metrics visualization and dashboards
+- **Grafana on ECS**: Metrics visualization with pre-built dashboards
 - **AWS Distro for OpenTelemetry (ADOT)**: Metrics collection from services
 
 ## Prerequisites
@@ -179,8 +179,6 @@ mvn test
 mvn test -f microservice-1/pom.xml && mvn test -f microservice-2/pom.xml
 ```
 
-See [TESTING.md](TESTING.md) for detailed test documentation.
-
 ### 4. Local Development
 
 #### Microservice 1 (REST API)
@@ -263,11 +261,11 @@ Access Grafana at the URL above and log in with:
 
 Three comprehensive dashboards are included in `grafana-dashboards/`:
 
-1. **JVM Dashboard**: Memory usage, garbage collection, thread metrics, CPU
-2. **HTTP Metrics Dashboard**: Request rates, latencies, status codes, errors
-3. **Business Metrics Dashboard**: SQS, S3, and validation-specific metrics
+1. **JVM Dashboard** (`jvm-dashboard.json`): Memory usage, garbage collection, thread metrics, CPU
+2. **HTTP Metrics Dashboard** (`http-metrics-dashboard.json`): Request rates, latencies, status codes, errors
+3. **Business Metrics Dashboard** (`business-metrics-dashboard.json`): SQS, S3, and validation-specific metrics
 
-See [GRAFANA-SETUP.md](GRAFANA-SETUP.md) for Grafana configuration and setup instructions, and [MONITORING.md](MONITORING.md) for detailed monitoring documentation and example PromQL queries.
+Import these dashboards in Grafana via **Dashboards → Import** to start monitoring your services.
 
 ## API Documentation
 
