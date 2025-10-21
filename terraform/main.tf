@@ -73,13 +73,33 @@ module "ecs_cluster" {
   enable_container_insights = true
 }
 
-# Monitoring Module (Prometheus & Grafana)
+# Monitoring Module (Prometheus)
 module "monitoring" {
   source = "./modules/monitoring"
 
-  project_name           = var.project_name
-  workspace_alias        = "${var.project_name}-metrics"
-  grafana_workspace_name = "${var.project_name}-grafana"
+  project_name    = var.project_name
+  workspace_alias = "${var.project_name}-metrics"
+}
+
+# Grafana on ECS
+module "grafana" {
+  source = "./modules/grafana-ecs"
+
+  project_name                 = var.project_name
+  vpc_id                       = module.networking.vpc_id
+  public_subnet_ids            = module.networking.public_subnet_ids
+  private_subnet_ids           = module.networking.private_subnet_ids
+  cluster_id                   = module.ecs_cluster.cluster_id
+  cluster_name                 = module.ecs_cluster.cluster_name
+  prometheus_endpoint          = module.monitoring.prometheus_endpoint
+  prometheus_query_policy_arn  = module.monitoring.grafana_prometheus_query_policy_arn
+  aws_region                   = var.aws_region
+  grafana_admin_password       = var.grafana_admin_password
+
+  # Resource configuration
+  cpu           = 512
+  memory        = 1024
+  desired_count = 1
 }
 
 # Microservice 1 (API Service with ALB)

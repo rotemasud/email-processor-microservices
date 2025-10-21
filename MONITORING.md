@@ -6,7 +6,7 @@ This guide explains how to access and use the AWS Managed Prometheus and Grafana
 
 The monitoring stack includes:
 - **AWS Managed Prometheus (AMP)**: Stores metrics from both microservices
-- **AWS Managed Grafana (AMG)**: Visualizes metrics with pre-built dashboards
+- **Grafana on ECS**: Self-hosted Grafana service for visualizing metrics with pre-built dashboards
 - **AWS Distro for OpenTelemetry (ADOT) Collector**: Scrapes Prometheus metrics from Spring Boot apps
 
 ## Architecture
@@ -44,34 +44,32 @@ The monitoring stack includes:
                   │
                   ▼
          ┌────────────────┐
-         │ AWS Managed    │
-         │ Grafana (AMG)  │
+         │   Grafana on   │
+         │   ECS Fargate  │
          └────────────────┘
 ```
 
 ## Accessing Grafana
 
-After deploying with Terraform, get the Grafana workspace URL:
+After deploying with Terraform, get the Grafana URL:
 
 ```bash
 cd terraform
-terraform output grafana_workspace_endpoint
+terraform output grafana_url
 ```
 
 ### First-Time Setup
 
-1. Navigate to the Grafana workspace URL
-2. Sign in with your AWS SSO credentials (configured during Terraform deployment)
-3. You'll be redirected to the Grafana UI
+1. Navigate to the Grafana URL (ALB DNS name)
+2. Log in with the default credentials:
+   - **Username**: `admin`
+   - **Password**: Retrieve from SSM Parameter Store:
+     ```bash
+     aws ssm get-parameter --name /email-processor/grafana/admin-password --with-decryption --query 'Parameter.Value' --output text
+     ```
+3. You'll be redirected to the Grafana home page
 
-### Setting Up AWS SSO (if not already configured)
-
-If AWS SSO is not set up:
-
-1. Go to AWS SSO console
-2. Enable AWS SSO for your organization
-3. Create users and assign them to the Grafana workspace
-4. Update the Terraform variable if needed and re-apply
+**Note**: For detailed Grafana setup, configuration, and datasource setup, see [GRAFANA-SETUP.md](GRAFANA-SETUP.md)
 
 ## Importing Dashboards
 
@@ -187,7 +185,7 @@ aws ecs execute-command --cluster <cluster-name> \
 
 ## Alerting (Optional Enhancement)
 
-AWS Managed Grafana supports alerting. To set up alerts:
+Grafana supports alerting. To set up alerts:
 
 1. In Grafana, go to **Alerting** → **Alert rules**
 2. Create a new alert rule
@@ -239,7 +237,8 @@ rate(sqs_messages_processed_total{status="failure"}[5m]) > 0
    - Ensure the workspace URL is correct
 
 2. **Check IAM Permissions**:
-   - Grafana role has `aps:QueryMetrics` permission
+   - Grafana ECS task role has `aps:QueryMetrics` permission
+   - SigV4 authentication is enabled in the datasource
 
 ### Dashboard Shows No Data
 
@@ -249,19 +248,23 @@ rate(sqs_messages_processed_total{status="failure"}[5m]) > 0
 
 ## Cost Optimization
 
-- **Prometheus**: Charged for ingested samples and query volume
-- **Grafana**: Charged per active user per month
+- **Prometheus**: Charged for ingested samples and query volume (~$0.03 per million samples)
+- **Grafana on ECS**: Fargate compute costs (~$20-30/month for single instance)
+- **EFS for Grafana**: Storage costs (~$0.30/GB/month, typically <1GB)
 - **ADOT Collector**: No additional cost (runs as ECS sidecar)
 
 To reduce costs:
 - Adjust scrape intervals (default: 30s)
 - Reduce retention period if not using long-term analysis
-- Limit number of Grafana users
+- Use smaller Fargate task size for Grafana if sufficient
+- Consider running Grafana only during business hours for dev environments
 
 ## Additional Resources
 
 - [AWS Managed Prometheus Documentation](https://docs.aws.amazon.com/prometheus/)
-- [AWS Managed Grafana Documentation](https://docs.aws.amazon.com/grafana/)
+- [Grafana Documentation](https://grafana.com/docs/)
+- [Grafana with AWS SigV4](https://grafana.com/docs/grafana/latest/datasources/prometheus/#sigv4-authentication)
+- [GRAFANA-SETUP.md](GRAFANA-SETUP.md) - Detailed Grafana setup guide
 - [Spring Boot Actuator Metrics](https://docs.spring.io/spring-boot/docs/current/reference/html/actuator.html#actuator.metrics)
 - [Micrometer Prometheus Registry](https://micrometer.io/docs/registry/prometheus)
 - [ADOT Collector Configuration](https://aws-otel.github.io/docs/getting-started/collector)

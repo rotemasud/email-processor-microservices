@@ -9,9 +9,3 @@ variable "workspace_alias" {
   default     = "email-processor-metrics"
 }
 
-variable "grafana_workspace_name" {
-  description = "Name for the Grafana workspace"
-  type        = string
-  default     = "email-processor-grafana"
-}
-

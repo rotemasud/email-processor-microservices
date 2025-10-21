@@ -18,19 +18,14 @@ output "prometheus_remote_write_url" {
   value       = "${aws_prometheus_workspace.main.prometheus_endpoint}api/v1/remote_write"
 }
 
-output "grafana_workspace_id" {
-  description = "ID of the Grafana workspace"
-  value       = aws_grafana_workspace.main.id
+output "prometheus_query_url" {
+  description = "Prometheus query URL for Grafana datasource"
+  value       = "${aws_prometheus_workspace.main.prometheus_endpoint}api/v1/query"
 }
 
-output "grafana_workspace_endpoint" {
-  description = "Grafana workspace endpoint URL"
-  value       = aws_grafana_workspace.main.endpoint
-}
-
-output "grafana_role_arn" {
-  description = "ARN of the Grafana IAM role"
-  value       = aws_iam_role.grafana.arn
+output "grafana_prometheus_query_policy_arn" {
+  description = "ARN of the IAM policy for Grafana to query Prometheus"
+  value       = aws_iam_policy.grafana_prometheus_query.arn
 }
 
 output "prometheus_remote_write_policy_arn" {

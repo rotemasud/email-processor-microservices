@@ -86,12 +86,17 @@ output "prometheus_endpoint" {
   value       = module.monitoring.prometheus_endpoint
 }
 
-output "grafana_workspace_endpoint" {
-  description = "AWS Managed Grafana workspace URL"
-  value       = module.monitoring.grafana_workspace_endpoint
+output "grafana_url" {
+  description = "Grafana URL (accessible via ALB)"
+  value       = module.grafana.grafana_url
 }
 
-output "grafana_workspace_id" {
-  description = "AWS Managed Grafana workspace ID"
-  value       = module.monitoring.grafana_workspace_id
+output "grafana_alb_dns" {
+  description = "Grafana ALB DNS name"
+  value       = module.grafana.grafana_alb_dns
+}
+
+output "grafana_dashboard_bucket" {
+  description = "S3 bucket for Grafana dashboards"
+  value       = module.grafana.dashboard_bucket_name
 }

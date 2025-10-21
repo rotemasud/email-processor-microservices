@@ -1,0 +1,15 @@
+apiVersion: 1
+
+datasources:
+  - name: AWS Managed Prometheus
+    type: prometheus
+    access: proxy
+    url: ${PROMETHEUS_ENDPOINT}
+    isDefault: true
+    editable: false
+    jsonData:
+      httpMethod: POST
+      sigV4Auth: true
+      sigV4AuthType: default
+      sigV4Region: ${AWS_REGION}
+

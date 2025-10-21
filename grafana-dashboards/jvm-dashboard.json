@@ -1,6 +1,5 @@
 {
-  "dashboard": {
-    "title": "Email Processor - JVM Metrics",
+  "title": "Email Processor - JVM Metrics",
     "tags": ["jvm", "microservices", "email-processor"],
     "timezone": "browser",
     "schemaVersion": 16,
@@ -125,6 +124,4 @@
         ]
       }
     ]
-  }
 }
-

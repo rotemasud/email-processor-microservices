@@ -22,6 +22,12 @@ variable "api_token" {
   sensitive   = true
 }
 
+variable "grafana_admin_password" {
+  description = "Admin password for Grafana (must be provided in terraform.tfvars or as TF_VAR_grafana_admin_password)"
+  type        = string
+  sensitive   = true
+}
+
 variable "environment" {
   description = "Environment name"
   type        = string

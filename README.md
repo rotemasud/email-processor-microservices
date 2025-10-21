@@ -67,7 +67,7 @@ A cloud-native microservices architecture for processing email data using AWS se
 - **ECR**: Container image repositories
 - **CloudWatch**: Logging and monitoring
 - **AWS Managed Prometheus**: Metrics collection and storage
-- **AWS Managed Grafana**: Metrics visualization and dashboards
+- **Grafana on ECS**: Self-hosted Grafana for metrics visualization and dashboards
 - **AWS Distro for OpenTelemetry (ADOT)**: Metrics collection from services
 
 ## Prerequisites
@@ -217,7 +217,7 @@ curl -X POST http://localhost:8080/api/email \
 
 ## Monitoring & Observability
 
-This project includes comprehensive monitoring with AWS Managed Prometheus and Grafana.
+This project includes comprehensive monitoring with AWS Managed Prometheus and Grafana running on ECS.
 
 ### Metrics Endpoints
 
@@ -245,12 +245,19 @@ http://<service-url>:8080/actuator/prometheus
 After deploying infrastructure:
 
 ```bash
-# Get Grafana workspace URL
+# Get Grafana URL
 cd terraform
-terraform output grafana_workspace_endpoint
+terraform output grafana_url
 ```
 
-Navigate to the URL and sign in with AWS SSO credentials.
+Grafana is deployed as a self-hosted service on ECS Fargate with:
+- Persistent storage using Amazon EFS
+- AWS Managed Prometheus as the data source
+- Pre-configured dashboards for immediate insights
+
+Access Grafana at the URL above and log in with:
+- **Username**: `admin`
+- **Password**: Retrieved from SSM Parameter Store (see terraform.tfvars)
 
 ### Pre-built Dashboards
 
@@ -260,7 +267,7 @@ Three comprehensive dashboards are included in `grafana-dashboards/`:
 2. **HTTP Metrics Dashboard**: Request rates, latencies, status codes, errors
 3. **Business Metrics Dashboard**: SQS, S3, and validation-specific metrics
 
-See [MONITORING.md](MONITORING.md) for detailed monitoring documentation, dashboard import instructions, and example PromQL queries.
+See [GRAFANA-SETUP.md](GRAFANA-SETUP.md) for Grafana configuration and setup instructions, and [MONITORING.md](MONITORING.md) for detailed monitoring documentation and example PromQL queries.
 
 ## API Documentation
 

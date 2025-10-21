@@ -1,6 +1,5 @@
 {
-  "dashboard": {
-    "title": "Email Processor - Business Metrics",
+  "title": "Email Processor - Business Metrics",
     "tags": ["business", "microservices", "email-processor"],
     "timezone": "browser",
     "schemaVersion": 16,
@@ -191,6 +190,4 @@
         ]
       }
     ]
-  }
 }
-

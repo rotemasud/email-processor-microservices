@@ -1,6 +1,5 @@
 {
-  "dashboard": {
-    "title": "Email Processor - HTTP Metrics",
+  "title": "Email Processor - HTTP Metrics",
     "tags": ["http", "microservices", "email-processor"],
     "timezone": "browser",
     "schemaVersion": 16,
@@ -98,6 +97,4 @@
         ]
       }
     ]
-  }
 }
-
