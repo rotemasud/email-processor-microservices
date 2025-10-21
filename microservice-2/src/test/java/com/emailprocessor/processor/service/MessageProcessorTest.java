@@ -14,7 +14,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class MessageProcessorTest {
@@ -61,8 +60,8 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
-                .thenReturn("emails/2023/09/01/1693561101-john_doe.json");
+        doReturn("emails/2023/09/01/1693561101-john_doe.json")
+                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
@@ -138,8 +137,8 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
-                .thenThrow(new RuntimeException("S3 connection failed"));
+        doThrow(new RuntimeException("S3 connection failed"))
+                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
