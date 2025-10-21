@@ -67,8 +67,6 @@ A cloud-native microservices architecture for processing email data using AWS se
 - **ECR**: Container image repositories
 - **CloudWatch**: Logging and monitoring
 
-**✨ Modular Structure**: The Terraform configuration uses reusable modules for easy scalability and maintenance. See [terraform/MODULES-README.md](terraform/MODULES-README.md) for details.
-
 ## Prerequisites
 
 - AWS CLI configured with appropriate permissions
