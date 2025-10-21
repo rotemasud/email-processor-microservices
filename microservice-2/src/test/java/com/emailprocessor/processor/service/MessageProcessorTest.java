@@ -38,7 +38,7 @@ class MessageProcessorTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         
-        // Mock the timer to execute the supplier directly
+        // Mock the timer to execute the supplier directly (lenient to avoid stubbing conflicts)
         lenient().when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
                 .thenAnswer(invocation -> {
                     java.util.function.Supplier<?> supplier = invocation.getArgument(0);
@@ -63,9 +63,16 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        // Explicitly stub for this test - use when().thenReturn() with lenient class mock
-        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
-                .thenReturn("emails/2023/09/01/1693561101-john_doe.json");
+        // Stub S3 upload to return success
+        doReturn("emails/2023/09/01/1693561101-john_doe.json")
+                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
+        
+        // Stub the timer for this specific test to actually execute the supplier
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
