@@ -20,6 +20,7 @@ import software.amazon.awssdk.services.s3.model.S3Exception;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class S3UploaderServiceTest {
@@ -46,8 +47,8 @@ class S3UploaderServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Mock the timer to execute the supplier directly
-        when(s3UploadTimer.record(any(java.util.function.Supplier.class)))
+        // Mock the timer to execute the supplier directly (lenient to avoid stubbing conflicts)
+        lenient().when(s3UploadTimer.record(any(java.util.function.Supplier.class)))
                 .thenAnswer(invocation -> {
                     java.util.function.Supplier<?> supplier = invocation.getArgument(0);
                     return supplier.get();
