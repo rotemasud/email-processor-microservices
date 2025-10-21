@@ -347,13 +347,6 @@ terraform apply
 # (See CLI-OPERATIONS-GUIDE.md for detailed commands)
 ```
 
-## Monitoring and Logging
-
-- **CloudWatch Logs**: Container logs are automatically collected
-- **Health Checks**: Both services expose `/api/health` endpoints
-- **Metrics**: ECS service metrics available in CloudWatch
-- **Alarms**: Dead letter queue depth monitoring
-
 ## Security Features
 
 - **Network Security**: Private subnets for ECS tasks
