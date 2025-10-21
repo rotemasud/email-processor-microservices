@@ -323,10 +323,16 @@ email-processor-microservices/
 │   ├── pom.xml
 │   └── Dockerfile
 ├── terraform/                      # Infrastructure as Code
+│   ├── modules/
+│   │   ├── networking/            # VPC, subnets, NAT gateway
+│   │   ├── sqs/                   # SQS queue and DLQ
+│   │   ├── s3/                    # S3 bucket configuration
+│   │   ├── ecs-cluster/           # ECS cluster
+│   │   └── ecs-service/           # Reusable ECS service module
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
-│   └── ecs.tf
+│   └── backend.tf
 ├── .github/workflows/              # CI/CD pipelines
 │   ├── ci.yml
 │   └── cd.yml
