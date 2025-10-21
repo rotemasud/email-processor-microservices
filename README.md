@@ -342,9 +342,6 @@ terraform apply
 # Go to: GitHub → Actions → "CD - Deploy to ECS" → Run workflow
 # - Select "both" to deploy all services
 # - Use image tag "latest" or specify a specific SHA
-
-# Alternative: Deploy locally using AWS CLI
-# (See CLI-OPERATIONS-GUIDE.md for detailed commands)
 ```
 
 ## Security Features
