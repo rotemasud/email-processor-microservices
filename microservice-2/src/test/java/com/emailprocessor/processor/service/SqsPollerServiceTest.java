@@ -1,6 +1,7 @@
 package com.emailprocessor.processor.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,6 +27,9 @@ class SqsPollerServiceTest {
     @Mock
     private MessageProcessor messageProcessor;
 
+    @Mock
+    private Counter messagesReceivedCounter;
+
     private SqsPollerService sqsPollerService;
 
     private final String queueUrl = "https://sqs.us-west-1.amazonaws.com/123456789/test-queue";
@@ -33,7 +37,7 @@ class SqsPollerServiceTest {
 
     @BeforeEach
     void setUp() {
-        sqsPollerService = new SqsPollerService(sqsClient, queueUrl, messageProcessor, objectMapper);
+        sqsPollerService = new SqsPollerService(sqsClient, queueUrl, messageProcessor, objectMapper, messagesReceivedCounter);
     }
 
     @Test

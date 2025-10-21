@@ -2,6 +2,8 @@ package com.emailprocessor.api.service;
 
 import com.emailprocessor.api.dto.EmailRequest;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,6 +25,15 @@ class SqsPublisherServiceTest {
     @Mock
     private SqsClient sqsClient;
 
+    @Mock
+    private Counter messagesSentCounter;
+
+    @Mock
+    private Counter messagesSentFailureCounter;
+
+    @Mock
+    private Timer publishTimer;
+
     private SqsPublisherService sqsPublisherService;
 
     private final String queueUrl = "https://sqs.us-west-1.amazonaws.com/123456789/test-queue";
@@ -30,7 +41,14 @@ class SqsPublisherServiceTest {
 
     @BeforeEach
     void setUp() {
-        sqsPublisherService = new SqsPublisherService(sqsClient, queueUrl, objectMapper);
+        // Mock the timer to execute the supplier directly
+        when(publishTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
+        sqsPublisherService = new SqsPublisherService(sqsClient, queueUrl, objectMapper,
+                messagesSentCounter, messagesSentFailureCounter, publishTimer);
     }
 
     @Test

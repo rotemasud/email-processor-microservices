@@ -1,6 +1,7 @@
 package com.emailprocessor.api.service;
 
 import com.emailprocessor.api.dto.EmailRequest;
+import io.micrometer.core.instrument.Counter;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -21,6 +22,15 @@ class ValidationServiceTest {
     @Mock
     private SsmClient ssmClient;
 
+    @Mock
+    private Counter validationSuccessCounter;
+
+    @Mock
+    private Counter tokenValidationFailureCounter;
+
+    @Mock
+    private Counter emailDataValidationFailureCounter;
+
     private ValidationService validationService;
 
     private final String parameterName = "/email-processor/api-token";
@@ -40,7 +50,8 @@ class ValidationServiceTest {
 
         when(ssmClient.getParameter(any(GetParameterRequest.class))).thenReturn(response);
 
-        validationService = new ValidationService(ssmClient, parameterName);
+        validationService = new ValidationService(ssmClient, parameterName,
+                validationSuccessCounter, tokenValidationFailureCounter, emailDataValidationFailureCounter);
     }
 
     @Test

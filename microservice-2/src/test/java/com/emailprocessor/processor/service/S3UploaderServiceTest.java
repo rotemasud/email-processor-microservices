@@ -2,6 +2,9 @@ package com.emailprocessor.processor.service;
 
 import com.emailprocessor.processor.dto.EmailMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.DistributionSummary;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -24,6 +27,18 @@ class S3UploaderServiceTest {
     @Mock
     private S3Client s3Client;
 
+    @Mock
+    private Counter s3UploadsSuccessCounter;
+
+    @Mock
+    private Counter s3UploadsFailureCounter;
+
+    @Mock
+    private Timer s3UploadTimer;
+
+    @Mock
+    private DistributionSummary s3FileSizeSummary;
+
     private S3UploaderService s3UploaderService;
 
     private final String bucketName = "test-email-bucket";
@@ -31,7 +46,14 @@ class S3UploaderServiceTest {
 
     @BeforeEach
     void setUp() {
-        s3UploaderService = new S3UploaderService(s3Client, bucketName, objectMapper);
+        // Mock the timer to execute the supplier directly
+        when(s3UploadTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
+        s3UploaderService = new S3UploaderService(s3Client, bucketName, objectMapper,
+                s3UploadsSuccessCounter, s3UploadsFailureCounter, s3UploadTimer, s3FileSizeSummary);
     }
 
     @Test

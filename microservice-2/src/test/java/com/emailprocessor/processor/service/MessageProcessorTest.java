@@ -2,6 +2,8 @@ package com.emailprocessor.processor.service;
 
 import com.emailprocessor.processor.dto.EmailMessage;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.Timer;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,13 +21,29 @@ class MessageProcessorTest {
     @Mock
     private S3UploaderService s3UploaderService;
 
+    @Mock
+    private Counter messagesProcessedSuccessCounter;
+
+    @Mock
+    private Counter messagesProcessedFailureCounter;
+
+    @Mock
+    private Timer messageProcessingTimer;
+
     private MessageProcessor messageProcessor;
     private ObjectMapper objectMapper;
 
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        messageProcessor = new MessageProcessor(s3UploaderService, objectMapper);
+        // Mock the timer to execute the supplier directly
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+                .thenAnswer(invocation -> {
+                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    return supplier.get();
+                });
+        messageProcessor = new MessageProcessor(s3UploaderService, objectMapper, 
+                messagesProcessedSuccessCounter, messagesProcessedFailureCounter, messageProcessingTimer);
     }
 
     @Test
