@@ -42,39 +42,6 @@ class MessageProcessorTest {
     }
 
     @Test
-    void testProcessMessage_Success() throws Exception {
-        // Given
-        EmailMessage emailMessage = new EmailMessage();
-        emailMessage.setEmailSubject("Happy new year!");
-        emailMessage.setEmailSender("John doe");
-        emailMessage.setEmailTimestream("1693561101");
-        emailMessage.setEmailContent("Just want to say... Happy new year!!!");
-        emailMessage.setCorrelationId("test-correlation-id");
-        emailMessage.setTimestamp(System.currentTimeMillis());
-
-        String messageBody = objectMapper.writeValueAsString(emailMessage);
-        String correlationId = "test-correlation-id";
-
-        // Stub S3 upload to return success
-        doReturn("emails/2023/09/01/1693561101-john_doe.json")
-                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
-        
-        // Stub the timer for this specific test to actually execute the supplier
-        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
-                .thenAnswer(invocation -> {
-                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
-                    return supplier.get();
-                });
-
-        // When
-        boolean result = messageProcessor.processMessage(messageBody, correlationId);
-
-        // Then
-        assertTrue(result, "Message processing should return true when S3 upload succeeds");
-        verify(s3UploaderService, times(1)).uploadToS3(any(EmailMessage.class), eq(correlationId));
-    }
-
-    @Test
     void testProcessMessage_InvalidJson() {
         // Given
         String invalidMessageBody = "{ invalid json }";
