@@ -42,6 +42,10 @@ class MessageProcessorTest {
                     java.util.function.Supplier<?> supplier = invocation.getArgument(0);
                     return supplier.get();
                 });
+        // Default stub for S3 upload (can be overridden in tests)
+        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
+                .thenReturn("default-s3-key.json");
+        
         messageProcessor = new MessageProcessor(s3UploaderService, objectMapper, 
                 messagesProcessedSuccessCounter, messagesProcessedFailureCounter, messageProcessingTimer);
     }
@@ -59,9 +63,6 @@ class MessageProcessorTest {
 
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
-
-        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
-                .thenReturn("emails/2023/09/01/1693561101-john_doe.json");
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
