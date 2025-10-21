@@ -173,8 +173,14 @@ role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/GitHubActionsRole
 git clone https://github.com/YOUR_GITHUB_USERNAME/email-processor-microservices.git
 cd email-processor-microservices/terraform
 
-# Update terraform.tfvars with your preferences
-# (Optional: change region, instance sizes, etc.)
+# Create your terraform.tfvars from the example
+cp terraform.tfvars.example terraform.tfvars
+
+# IMPORTANT: Edit terraform.tfvars and update:
+# - api_token: Change to a secure random string
+# - grafana_admin_password: Change to a strong password
+# - aws_region: Change if you want a different region (optional)
+nano terraform.tfvars  # or use your preferred editor
 
 # Initialize and apply
 terraform init

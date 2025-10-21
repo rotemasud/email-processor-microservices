@@ -1,0 +1,29 @@
+# Copy this file to terraform.tfvars and customize the values
+# Example: cp terraform.tfvars.example terraform.tfvars
+
+# AWS Configuration
+aws_region = "us-west-1"  # Change to your preferred AWS region
+
+# Project Configuration
+project_name = "email-processor"
+environment  = "dev"
+
+# API Token (will be stored in SSM Parameter Store)
+# IMPORTANT: Change this to a secure random string
+api_token = "CHANGE_ME_TO_SECURE_TOKEN"
+
+# Grafana Admin Password (will be stored in SSM Parameter Store)
+# IMPORTANT: Change this to a strong password
+grafana_admin_password = "CHANGE_ME_TO_STRONG_PASSWORD"
+
+# ECS Configuration
+microservice_1_cpu    = 512
+microservice_1_memory = 1024
+microservice_2_cpu    = 256
+microservice_2_memory = 512
+
+# Scaling Configuration
+desired_count = 1
+min_capacity  = 1
+max_capacity  = 3
+

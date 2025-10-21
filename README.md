@@ -134,6 +134,10 @@ The Terraform configuration uses a modular structure for better maintainability 
 # Navigate to terraform directory
 cd terraform
 
+# Create your terraform.tfvars from the example (first time only)
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars and set secure values for api_token and grafana_admin_password
+
 # Initialize Terraform (downloads modules and providers)
 terraform init
 
@@ -368,7 +372,8 @@ email-processor-microservices/
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
-│   └── backend.tf
+│   ├── backend.tf
+│   └── terraform.tfvars.example   # Template for configuration values
 ├── grafana-dashboards/             # Pre-built Grafana dashboards
 │   ├── jvm-dashboard.json
 │   ├── http-metrics-dashboard.json
