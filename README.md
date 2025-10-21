@@ -362,11 +362,13 @@ email-processor-microservices/
 ├── microservice-1/                 # REST API service
 │   ├── src/main/java/
 │   ├── src/main/resources/
+│   ├── src/test/java/             # Unit tests
 │   ├── pom.xml
 │   └── Dockerfile
 ├── microservice-2/                 # SQS consumer service
 │   ├── src/main/java/
 │   ├── src/main/resources/
+│   ├── src/test/java/             # Unit tests
 │   ├── pom.xml
 │   └── Dockerfile
 ├── terraform/                      # Infrastructure as Code
@@ -375,15 +377,22 @@ email-processor-microservices/
 │   │   ├── sqs/                   # SQS queue and DLQ
 │   │   ├── s3/                    # S3 bucket configuration
 │   │   ├── ecs-cluster/           # ECS cluster
-│   │   └── ecs-service/           # Reusable ECS service module
+│   │   ├── ecs-service/           # Reusable ECS service module
+│   │   ├── monitoring/            # AWS Managed Prometheus
+│   │   └── grafana-ecs/           # Grafana on ECS
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
 │   └── backend.tf
+├── grafana-dashboards/             # Pre-built Grafana dashboards
+│   ├── jvm-dashboard.json
+│   ├── http-metrics-dashboard.json
+│   └── business-metrics-dashboard.json
 ├── .github/workflows/              # CI/CD pipelines
 │   ├── ci.yml
 │   └── cd.yml
-└── README.md
+├── README.md                       # Project documentation
+└── FORKING-GUIDE.md               # Setup guide for your own AWS account
 ```
 ### Logs and Debugging
 
