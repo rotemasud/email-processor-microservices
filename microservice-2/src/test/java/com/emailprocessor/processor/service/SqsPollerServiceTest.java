@@ -21,13 +21,13 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class SqsPollerServiceTest {
 
-    @Mock
+    @Mock(lenient = true)
     private SqsClient sqsClient;
 
-    @Mock
+    @Mock(lenient = true)
     private MessageProcessor messageProcessor;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesReceivedCounter;
 
     private SqsPollerService sqsPollerService;

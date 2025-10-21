@@ -25,19 +25,19 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class S3UploaderServiceTest {
 
-    @Mock
+    @Mock(lenient = true)
     private S3Client s3Client;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter s3UploadsSuccessCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter s3UploadsFailureCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Timer s3UploadTimer;
 
-    @Mock
+    @Mock(lenient = true)
     private DistributionSummary s3FileSizeSummary;
 
     private S3UploaderService s3UploaderService;

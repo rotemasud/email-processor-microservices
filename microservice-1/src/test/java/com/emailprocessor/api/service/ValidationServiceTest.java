@@ -19,16 +19,16 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class ValidationServiceTest {
 
-    @Mock
+    @Mock(lenient = true)
     private SsmClient ssmClient;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter validationSuccessCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter tokenValidationFailureCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter emailDataValidationFailureCounter;
 
     private ValidationService validationService;

@@ -63,15 +63,15 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        // Explicitly stub for this test
-        lenient().doReturn("emails/2023/09/01/1693561101-john_doe.json")
-                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
+        // Explicitly stub for this test - use when().thenReturn() with lenient class mock
+        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
+                .thenReturn("emails/2023/09/01/1693561101-john_doe.json");
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
 
         // Then
-        assertTrue(result);
+        assertTrue(result, "Message processing should return true when S3 upload succeeds");
         verify(s3UploaderService, times(1)).uploadToS3(any(EmailMessage.class), eq(correlationId));
     }
 
@@ -141,9 +141,9 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        // Stub to throw exception
-        lenient().doThrow(new RuntimeException("S3 connection failed"))
-                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
+        // Stub to throw exception - use when().thenThrow() with lenient class mock
+        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
+                .thenThrow(new RuntimeException("S3 connection failed"));
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);

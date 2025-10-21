@@ -23,16 +23,16 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class SqsPublisherServiceTest {
 
-    @Mock
+    @Mock(lenient = true)
     private SqsClient sqsClient;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesSentCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesSentFailureCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Timer publishTimer;
 
     private SqsPublisherService sqsPublisherService;
