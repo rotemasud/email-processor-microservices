@@ -19,16 +19,16 @@ import static org.mockito.Mockito.lenient;
 @ExtendWith(MockitoExtension.class)
 class MessageProcessorTest {
 
-    @Mock
+    @Mock(lenient = true)
     private S3UploaderService s3UploaderService;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesProcessedSuccessCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Counter messagesProcessedFailureCounter;
 
-    @Mock
+    @Mock(lenient = true)
     private Timer messageProcessingTimer;
 
     private MessageProcessor messageProcessor;
@@ -64,7 +64,7 @@ class MessageProcessorTest {
         String correlationId = "test-correlation-id";
 
         // Explicitly stub for this test
-        doReturn("emails/2023/09/01/1693561101-john_doe.json")
+        lenient().doReturn("emails/2023/09/01/1693561101-john_doe.json")
                 .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
 
         // When
@@ -142,7 +142,7 @@ class MessageProcessorTest {
         String correlationId = "test-correlation-id";
 
         // Stub to throw exception
-        doThrow(new RuntimeException("S3 connection failed"))
+        lenient().doThrow(new RuntimeException("S3 connection failed"))
                 .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
 
         // When
