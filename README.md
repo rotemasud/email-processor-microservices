@@ -146,17 +146,37 @@ terraform apply
 
 ### 2. Local Development
 
+**Prerequisites for local development:**
+- AWS infrastructure deployed (Step 1 above)
+- AWS CLI configured with credentials
+- Environment variables set (see below)
+
 #### Microservice 1 (REST API)
+
 ```bash
+# Set required environment variables
+export AWS_DEFAULT_REGION=us-west-1
+export SQS_QUEUE_URL=$(aws sqs get-queue-url --queue-name email-processor-queue --query 'QueueUrl' --output text)
+
+# Run the service
 cd microservice-1
 mvn spring-boot:run
 ```
 
 #### Microservice 2 (SQS Consumer)
+
 ```bash
+# Set required environment variables
+export AWS_DEFAULT_REGION=us-west-1
+export SQS_QUEUE_URL=$(aws sqs get-queue-url --queue-name email-processor-queue --query 'QueueUrl' --output text)
+export S3_BUCKET_NAME=email-processor-storage
+
+# Run the service
 cd microservice-2
 mvn spring-boot:run
 ```
+
+**Note:** Both services connect to real AWS resources (SQS, S3, SSM Parameter Store), so the infrastructure must be deployed first.
 
 ### 3. Testing the API
 
