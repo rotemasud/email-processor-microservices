@@ -17,23 +17,23 @@ output "public_subnet_ids" {
 # Messaging Outputs
 output "sqs_queue_url" {
   description = "URL of the SQS queue"
-  value       = module.messaging.queue_url
+  value       = module.sqs.queue_url
 }
 
 output "sqs_queue_arn" {
   description = "ARN of the SQS queue"
-  value       = module.messaging.queue_arn
+  value       = module.sqs.queue_arn
 }
 
 # Storage Outputs
 output "s3_bucket_name" {
   description = "Name of the S3 bucket"
-  value       = module.storage.bucket_name
+  value       = module.s3.bucket_name
 }
 
 output "s3_bucket_arn" {
   description = "ARN of the S3 bucket"
-  value       = module.storage.bucket_arn
+  value       = module.s3.bucket_arn
 }
 
 # SSM Parameter Output

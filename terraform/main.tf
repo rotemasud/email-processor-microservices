@@ -32,8 +32,8 @@ module "networking" {
 }
 
 # Storage Module
-module "storage" {
-  source = "./modules/storage"
+module "s3" {
+  source = "./modules/s3"
 
   project_name        = var.project_name
   bucket_name_prefix  = "${var.project_name}-email-storage"
@@ -43,8 +43,8 @@ module "storage" {
 }
 
 # Messaging Module
-module "messaging" {
-  source = "./modules/messaging"
+module "sqs" {
+  source = "./modules/sqs"
 
   project_name               = var.project_name
   queue_name                 = "email-queue"
@@ -108,7 +108,7 @@ module "microservice_1" {
     },
     {
       name  = "SQS_QUEUE_URL"
-      value = module.messaging.queue_url
+      value = module.sqs.queue_url
     },
     {
       name  = "SSM_PARAMETER_NAME"
@@ -118,8 +118,8 @@ module "microservice_1" {
 
   # IAM Permissions
   sqs_queue_arns = [
-    module.messaging.queue_arn,
-    module.messaging.dlq_arn
+    module.sqs.queue_arn,
+    module.sqs.dlq_arn
   ]
   ssm_parameter_arns = [aws_ssm_parameter.api_token.arn]
   s3_bucket_arn      = ""
@@ -162,21 +162,21 @@ module "microservice_2" {
     },
     {
       name  = "SQS_QUEUE_URL"
-      value = module.messaging.queue_url
+      value = module.sqs.queue_url
     },
     {
       name  = "S3_BUCKET_NAME"
-      value = module.storage.bucket_name
+      value = module.s3.bucket_name
     }
   ]
 
   # IAM Permissions
   sqs_queue_arns = [
-    module.messaging.queue_arn,
-    module.messaging.dlq_arn
+    module.sqs.queue_arn,
+    module.sqs.dlq_arn
   ]
   ssm_parameter_arns = []
-  s3_bucket_arn      = module.storage.bucket_arn
+  s3_bucket_arn      = module.s3.bucket_arn
 
   # Logging
   log_retention_days = 7
