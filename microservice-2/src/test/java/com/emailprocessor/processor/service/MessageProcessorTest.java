@@ -39,9 +39,9 @@ class MessageProcessorTest {
         objectMapper = new ObjectMapper();
         
         // Setup all mock behaviors with lenient() to avoid stubbing issues
-        lenient().when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
                 .thenAnswer(invocation -> {
-                    java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+                    java.util.function.Supplier<Boolean> supplier = invocation.getArgument(0);
                     return supplier.get();
                 });
         
