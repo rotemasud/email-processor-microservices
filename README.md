@@ -255,7 +255,10 @@ Grafana is deployed as a self-hosted service on ECS Fargate with:
 
 Access Grafana at the URL above and log in with:
 - **Username**: `admin`
-- **Password**: Retrieved from SSM Parameter Store (see terraform.tfvars)
+- **Password**: Retrieve from SSM Parameter Store:
+  ```bash
+  aws ssm get-parameter --name /email-processor/grafana/admin-password --with-decryption --query 'Parameter.Value' --output text
+  ```
 
 ### Pre-built Dashboards
 
