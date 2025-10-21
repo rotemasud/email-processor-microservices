@@ -38,12 +38,11 @@ class MessageProcessorTest {
     void setUp() {
         objectMapper = new ObjectMapper();
         
-        // Setup all mock behaviors with lenient() to avoid stubbing issues
-        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
-                .thenAnswer(invocation -> {
-                    java.util.function.Supplier<Boolean> supplier = invocation.getArgument(0);
-                    return supplier.get();
-                });
+        // Mock the timer to execute the supplier directly
+        doAnswer(invocation -> {
+            java.util.function.Supplier<?> supplier = invocation.getArgument(0);
+            return supplier.get();
+        }).when(messageProcessingTimer).record(any());
         
         messageProcessor = new MessageProcessor(s3UploaderService, objectMapper, 
                 messagesProcessedSuccessCounter, messagesProcessedFailureCounter, messageProcessingTimer);
