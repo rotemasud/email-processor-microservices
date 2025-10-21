@@ -14,20 +14,21 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class MessageProcessorTest {
 
-    @Mock(lenient = true)
+    @Mock
     private S3UploaderService s3UploaderService;
 
-    @Mock(lenient = true)
+    @Mock
     private Counter messagesProcessedSuccessCounter;
 
-    @Mock(lenient = true)
+    @Mock
     private Counter messagesProcessedFailureCounter;
 
-    @Mock(lenient = true)
+    @Mock
     private Timer messageProcessingTimer;
 
     private MessageProcessor messageProcessor;
@@ -36,15 +37,17 @@ class MessageProcessorTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        // Mock the timer to execute the supplier directly
-        when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
+        
+        // Setup all mock behaviors with lenient() to avoid stubbing issues
+        lenient().when(messageProcessingTimer.record(any(java.util.function.Supplier.class)))
                 .thenAnswer(invocation -> {
                     java.util.function.Supplier<?> supplier = invocation.getArgument(0);
                     return supplier.get();
                 });
-        // Default stub for S3 upload (can be overridden in tests)
-        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
-                .thenReturn("default-s3-key.json");
+        
+        // Default stub for S3 upload using doReturn for better compatibility
+        lenient().doReturn("default-s3-key.json")
+                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
         
         messageProcessor = new MessageProcessor(s3UploaderService, objectMapper, 
                 messagesProcessedSuccessCounter, messagesProcessedFailureCounter, messageProcessingTimer);
@@ -138,8 +141,8 @@ class MessageProcessorTest {
         String messageBody = objectMapper.writeValueAsString(emailMessage);
         String correlationId = "test-correlation-id";
 
-        when(s3UploaderService.uploadToS3(any(EmailMessage.class), anyString()))
-                .thenThrow(new RuntimeException("S3 connection failed"));
+        doThrow(new RuntimeException("S3 connection failed"))
+                .when(s3UploaderService).uploadToS3(any(EmailMessage.class), anyString());
 
         // When
         boolean result = messageProcessor.processMessage(messageBody, correlationId);
